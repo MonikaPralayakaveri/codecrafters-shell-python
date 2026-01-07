@@ -9,9 +9,10 @@ def main():
         str_split = command.split()
         if command == "exit":
             break
-        if str_split[0] == "echo":
+        elif str_split[0] == "echo":
             print(" ".join(str_split[1::]))
-        print(command+": "+"command not found")
+        else:
+            print(command+": "+"command not found")
     
 
 
