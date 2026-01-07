@@ -6,8 +6,11 @@ def main():
     while True:
         sys.stdout.write("$ ")
         command = input()
+        str_split = command.split()
         if command == "exit":
             break
+        if str_split[0] == "echo":
+            print(" ".join(str_split[1::]))
         print(command+": "+"command not found")
     
 
