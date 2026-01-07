@@ -7,6 +7,8 @@ def main():
         sys.stdout.write("$ ")
         command = input()
         print(command+": "+"command not found")
+        if command == "exit":
+            break
 
 
 if __name__ == "__main__":
