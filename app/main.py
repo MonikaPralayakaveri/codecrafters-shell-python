@@ -11,8 +11,11 @@ def main():
             break
         elif str_split[0] == "echo":
             print(" ".join(str_split[1::]))
-        elif str_split[0] == "type" and str_split[1] == "exit" or str_split[1] == "echo":
-            print(str_split[1]+" is a shell builtin")
+        elif str_split[0] == "type":
+            if str_split[1] == "exit" or str_split[1] == "echo" or str_split[1] =="type" :
+                print(str_split[1]+" is a shell builtin")
+            else:
+                print(str_split[1]+": "+"not found")
         else:
             print(command+": "+"command not found")
     
