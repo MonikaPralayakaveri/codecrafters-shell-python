@@ -1,6 +1,7 @@
 import sys
 import shutil
 import os
+import subprocess
 
 
 def main():
@@ -23,7 +24,11 @@ def main():
                 print(str_split[1]+": "+"not found")
         
         else:
-            print(command+": "+"command not found")
+            command_path = shutil.which(str_split[0])
+            if command_path:
+                subprocess.run([command_path],str_split[1:])
+            else:
+                print(command+": "+"command not found")
     
 
 
