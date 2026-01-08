@@ -18,6 +18,9 @@ def main():
             print(" ".join(str_split[1::]))
         elif str_split[0] == "pwd":
             print(os.getcwd())
+        elif str_split[0] == "cd":
+            path = shutil.which(str_split[0])
+            print(os.chdir(path))
         elif str_split[0] == "type":
             builtin = ["exit", "echo","type","pwd"]
             if str_split[1] in builtin:
