@@ -17,7 +17,7 @@ def main():
         elif str_split[0] == "echo":
             print(" ".join(str_split[1::]))
         elif str_split[0] == "pwd":
-            print(os.getcsw())
+            print(os.getcwd())
         elif str_split[0] == "type":
             builtin = ["exit", "echo","type","pwd"]
             if str_split[1] in builtin:
