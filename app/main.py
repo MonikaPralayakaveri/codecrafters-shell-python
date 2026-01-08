@@ -14,8 +14,13 @@ def main():
         elif str_split[0] == "type":
             if str_split[1] == "exit" or str_split[1] == "echo" or str_split[1] =="type" :
                 print(str_split[1]+" is a shell builtin")
+            elif str_split[1] == "grep":
+                print(str_split[1]+ " is /usr/bin/"+str_split[1])
+            elif str_split[1] == "valid_command":
+                print(str_split[1]+" is /usr/local/bin/"+str_split[1])
             else:
                 print(str_split[1]+": "+"not found")
+        
         else:
             print(command+": "+"command not found")
     
