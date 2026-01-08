@@ -26,7 +26,7 @@ def main():
         else:
             command_path = shutil.which(str_split[0])
             if command_path:
-                subprocess.run([command_path],str_split[1:])
+                subprocess.run([command_path] +str_split[1:])
             else:
                 print(command+": "+"command not found")
     
