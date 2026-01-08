@@ -16,7 +16,6 @@ def main():
         elif str_split[0] == "type":
             if str_split[1] == "exit" or str_split[1] == "echo" or str_split[1] =="type" :
                 print(str_split[1]+" is a shell builtin")
-            
             elif shutil.which(str_split[1]):
                 command_path = shutil.which(str_split[1])
                 print(str_split[1]+ " is "+command_path)
