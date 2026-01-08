@@ -19,8 +19,15 @@ def main():
         elif str_split[0] == "pwd":
             print(os.getcwd())
         elif str_split[0] == "cd":
-            path = shutil.which(str_split[1])
-            print(os.chdir(path))
+            if len(str_split) >1:
+                cdpath = str_split[1]
+                cdpath = os.path.expanduser(cdpath)
+                try:
+                    os.chdir(cdpath)
+                except FileNotFoundError:
+                    print(f"cd: {cdpath} : No such file or directory")
+            else:
+                os.chdir(os.path.expanduser("~"))
         elif str_split[0] == "type":
             builtin = ["exit", "echo","type","pwd","cd"]
             if str_split[1] in builtin:
