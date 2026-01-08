@@ -22,7 +22,7 @@ def main():
             path = shutil.which(str_split[0])
             print(os.chdir(path))
         elif str_split[0] == "type":
-            builtin = ["exit", "echo","type","pwd"]
+            builtin = ["exit", "echo","type","pwd",]
             if str_split[1] in builtin:
                 print(str_split[1]+" is a shell builtin")
             elif shutil.which(str_split[1]):
