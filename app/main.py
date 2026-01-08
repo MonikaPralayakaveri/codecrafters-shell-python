@@ -1,4 +1,6 @@
 import sys
+import shutil
+import os
 
 
 def main():
@@ -7,6 +9,7 @@ def main():
         sys.stdout.write("$ ")
         command = input()
         str_split = command.split()
+        valid_name = str_split[1]
         if command == "exit":
             break
         elif str_split[0] == "echo":
@@ -14,12 +17,9 @@ def main():
         elif str_split[0] == "type":
             if str_split[1] == "exit" or str_split[1] == "echo" or str_split[1] =="type" :
                 print(str_split[1]+" is a shell builtin")
-            elif str_split[1] == "grep":
-                print(str_split[1]+ " is /usr/bin/"+str_split[1])
-            elif str_split[1] == "cat":
-                print(str_split[1]+ " is /bin/"+str_split[1])
-            elif str_split[1] == "valid_command":
-                print(str_split[1]+" is /usr/local/bin/"+str_split[1])
+            elif shutil.which(valid_name):
+                command_path = shutil.which(valid_name)
+                print(valid_name+ " is "+command_path)
             else:
                 print(str_split[1]+": "+"not found")
         
