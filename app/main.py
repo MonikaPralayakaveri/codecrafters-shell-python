@@ -30,6 +30,8 @@ def main():
                 args = str_split[1:]
                 if path:
                     subprocess.run([command_name] + args, executable = path)
+                elif command == "pwd":
+                    print(path)
                 else:
                     print(command+": "+"command not found")
     
