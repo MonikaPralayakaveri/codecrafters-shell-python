@@ -24,12 +24,13 @@ def main():
                 print(str_split[1]+": "+"not found")
         
         else:
-            command_path = shutil.which(str_split[0])
-            args = str_split[1:]
-            if command_path:
-                subprocess.run([command_path] +args, executable=command_path)
-            else:
-                print(command+": "+"command not found")
+            if str_split:
+                command_path = shutil.which(str_split[0])
+                args = str_split[1:]
+                if command_path:
+                    subprocess.run([command_path] +args, executable=command_path)
+                else:
+                    print(command+": "+"command not found")
     
 
 
