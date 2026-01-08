@@ -9,7 +9,6 @@ def main():
         sys.stdout.write("$ ")
         command = input()
         str_split = command.split()
-        valid_name = str_split[1]
         if command == "exit":
             break
         elif str_split[0] == "echo":
@@ -17,9 +16,10 @@ def main():
         elif str_split[0] == "type":
             if str_split[1] == "exit" or str_split[1] == "echo" or str_split[1] =="type" :
                 print(str_split[1]+" is a shell builtin")
-            elif shutil.which(valid_name):
-                command_path = shutil.which(valid_name)
-                print(valid_name+ " is "+command_path)
+            
+            elif shutil.which(str_split[1]):
+                command_path = shutil.which(str_split[1])
+                print(str_split[1]+ " is "+command_path)
             else:
                 print(str_split[1]+": "+"not found")
         
