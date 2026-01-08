@@ -18,17 +18,18 @@ def main():
             if str_split[1] == "exit" or str_split[1] == "echo" or str_split[1] =="type" :
                 print(str_split[1]+" is a shell builtin")
             elif shutil.which(str_split[1]):
-                command_path = shutil.which(str_split[1])
-                print(str_split[1]+ " is "+command_path)
+                path = shutil.which(str_split[1])
+                print(str_split[1]+ " is "+path)
             else:
                 print(str_split[1]+": "+"not found")
         
         else:
             if str_split:
-                command_path = shutil.which(str_split[0])
+                command_name = str_split[0]
+                path = shutil.which(command_name)
                 args = str_split[1:]
-                if command_path:
-                    subprocess.run([command_path] +args, executable=command_path)
+                if path:
+                    subprocess.run([command_name] + args, executable = path)
                 else:
                     print(command+": "+"command not found")
     
