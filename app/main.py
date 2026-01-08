@@ -25,7 +25,7 @@ def main():
                 try:
                     os.chdir(cdpath)
                 except FileNotFoundError:
-                    print(f"cd: {cdpath} : No such file or directory")
+                    print(f"cd: {cdpath}: No such file or directory")
             else:
                 os.chdir(os.path.expanduser("~"))
         elif str_split[0] == "type":
