@@ -18,9 +18,11 @@ def main():
         
         elif str_split[0] == "echo":
             q = command[5:]
-            q_replace = q.replace("'","").replace('"',"")
-            print(q_replace)
-            
+            if "'" in q or '"' in q:
+                q_replace = q.replace("'","").replace('"',"")
+                print(q_replace)
+            else:
+                print(q)
         elif str_split[0] == "pwd":
             print(os.getcwd())
         #for cd
