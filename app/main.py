@@ -10,7 +10,7 @@ def main():
     while True:
         sys.stdout.write("$ ")
         command = input()
-        str_split = command.split()
+        str_split = shlex.split(command)
         
         if not str_split:
             continue
@@ -18,8 +18,7 @@ def main():
             break
         
         elif str_split[0] == "echo":
-            strq = shlex.split(command)
-            print(" ".join(strq[1::]))
+            print(" ".join(str_split[1::]))
             
             
         elif str_split[0] == "pwd":
