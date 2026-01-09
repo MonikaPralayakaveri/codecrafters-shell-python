@@ -18,10 +18,10 @@ def main():
         
         elif str_split[0] == "echo":
             print(" ".join(str_split[1::]))
-            q = command
+            q = str_split[1:]
             if q:
                 q_replace = q.replace("'","")
-                print(q_replace)
+                print(str(q_replace))
             
         elif str_split[0] == "pwd":
             print(os.getcwd())
