@@ -17,7 +17,7 @@ def main():
             break
         
         elif str_split[0] == "echo":
-            q = " ".join(str_split[1::])
+            q = command[5:]
             q_replace = q.replace("'","").replace('"',"")
             print(q_replace)
             
