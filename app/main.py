@@ -21,7 +21,7 @@ def main():
             q = str_split[1:]
             if q:
                 full_str = " ".join(q)
-                q_replace = full_str("'","")
+                q_replace = full_str.replace("'","")
                 print(q_replace)
             
         elif str_split[0] == "pwd":
