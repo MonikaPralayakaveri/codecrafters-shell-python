@@ -21,7 +21,7 @@ def main():
             q = str_split[1:]
             if q:
                 q_replace = q.replace("'","")
-                print(str(q_replace))
+                print(q_replace)
             
         elif str_split[0] == "pwd":
             print(os.getcwd())
