@@ -2,6 +2,7 @@ import sys
 import shutil
 import os
 import subprocess
+import shlex
 
 
 def main():
@@ -17,12 +18,10 @@ def main():
             break
         
         elif str_split[0] == "echo":
-            q = command[5:]
-            if "'" in q or '"' in q:
-                q_replace = q.replace("'","").replace('"',"")
-                print(q_replace)
-            else:
-                print(q)
+            strq = shlex.split(command)
+            print(" ".join(strq[1::]))
+            
+            
         elif str_split[0] == "pwd":
             print(os.getcwd())
         #for cd
