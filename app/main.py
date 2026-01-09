@@ -20,7 +20,8 @@ def main():
             print(" ".join(str_split[1::]))
             q = str_split[1:]
             if q:
-                q_replace = q.replace("'","")
+                full_str = " ".join(q)
+                q_replace = full_str("'","")
                 print(q_replace)
             
         elif str_split[0] == "pwd":
