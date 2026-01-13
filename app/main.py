@@ -11,7 +11,7 @@ def main():
         sys.stdout.write("$ ")
         command = input()
         str_split = shlex.split(command)
-        
+        f = sys.stdout
         if not str_split:
             continue
         if command == "exit":
