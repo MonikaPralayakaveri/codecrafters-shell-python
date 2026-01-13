@@ -21,7 +21,7 @@ def main():
             cmd_part, fileName_part = command.split(">", 1)
             str_split = shlex.split(cmd_part)
             f = open(fileName_part.strip(), "w")
-            if cmd_part.endswith(1):
+            if cmd_part.endswith("1"):
                 cmd_part= cmd_part[:-1]
         else:
             str_split =shlex.split(command)
