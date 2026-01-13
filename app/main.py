@@ -17,6 +17,14 @@ def main():
         if command == "exit":
             break
         
+        if ">" in command:
+            if command == True:
+                cmd_part, fileName_part = command.split(">", 1)
+                str_split = shlex.split(cmd_part)
+                f = open(fileName_part.strip(), "w")
+            else:
+                str_split =shlex.split(command)
+        
         elif str_split[0] == "echo":
             print(" ".join(str_split[1::]))
             
@@ -58,7 +66,8 @@ def main():
                 subprocess.run([command_name] + args, executable = path)
             else:
                 print(command+": "+"command not found")
-    
+        if f is not sys.stdout:
+                f.close() 
 
 
 if __name__ == "__main__":
