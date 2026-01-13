@@ -12,6 +12,8 @@ def main():
         command = input()
         str_split = shlex.split(command)
         f = sys.stdout
+        f_err = sys.stderr
+        
         if not str_split:
             continue
         if command == "exit":
@@ -23,6 +25,9 @@ def main():
                 cmd_part= cmd_part[:-1]
             str_split = shlex.split(cmd_part)
             f = open(fileName_part.strip(), "w")
+            if ">" in command or "1>" in command or "2>" in command:
+                os.system(command)
+                continue
             
         else:
             str_split =shlex.split(command)
