@@ -18,14 +18,13 @@ def main():
             break
         
         if ">" in command:
-            if command == True:
-                cmd_part, fileName_part = command.split(">", 1)
-                str_split = shlex.split(cmd_part)
-                f = open(fileName_part.strip(), "w")
-            else:
-                str_split =shlex.split(command)
+            cmd_part, fileName_part = command.split(">", 1)
+            str_split = shlex.split(cmd_part)
+            f = open(fileName_part.strip(), "w")
+        else:
+            str_split =shlex.split(command)
         
-        elif str_split[0] == "echo":
+        if str_split[0] == "echo":
             print(" ".join(str_split[1::]))
             
             
