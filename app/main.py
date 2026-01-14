@@ -34,7 +34,7 @@ def main():
             str_split = shlex.split(cmd_part)
             fileName = fileName_part.strip()
             os.makedirs(os.path.dirname(os.path.abspath(fileName)), exist_ok=True)
-            f = open(filename, mode)
+            f = open(fileName, mode)
             
         else:
             str_split =shlex.split(command)
