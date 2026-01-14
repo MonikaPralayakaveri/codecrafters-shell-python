@@ -86,9 +86,9 @@ def main():
             args = str_split[1:] #collect everything after command name
             if path:
                 #in "child process" we pass the short name in list, full path -> executable
-                subprocess.run(str_split, stdout=f_out)
+                subprocess.run(str_split, stdout=f_out, stderr = f_err)
             else:
-                print(command+": "+"command not found")
+                print(command_name+": "+"command not found", file = f_err)
         if f_out is not sys.stdout:
                 f_out.close() 
         if f_err is not sys.stderr:
