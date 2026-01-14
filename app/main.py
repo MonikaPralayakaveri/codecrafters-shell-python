@@ -11,7 +11,7 @@ def main():
         sys.stdout.write("$ ")
         command = input()
         str_split = shlex.split(command)
-        f = sys.stdout
+        f_out = sys.stdout
         f_err = sys.stderr
         
         if not str_split:
@@ -38,12 +38,12 @@ def main():
             fileName = fileName_part.strip()
             
             os.makedirs(os.path.dirname(os.path.abspath(fileName)), exist_ok=True)
-            f = open(fileName, mode)
+            f_file = open(fileName, mode)
             
             if is_error_redir:
-                f_err = f
+                f_err = f_file
             else:
-                f_out = f
+                f_out = f_file
             
         else:
             str_split =shlex.split(command)
@@ -89,8 +89,10 @@ def main():
                 subprocess.run(str_split, stdout=f)
             else:
                 print(command+": "+"command not found")
-        if f is not sys.stdout:
-                f.close() 
+        if f_out is not sys.stdout:
+                f_out.close() 
+        if f_err is not sys.stderr:
+            f_err.close()
 
 
 if __name__ == "__main__":
