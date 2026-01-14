@@ -18,23 +18,32 @@ def main():
             continue
         if command == "exit":
             break
-        if ">>" in command:
-            operator ="1>>" if "1>>" in command else ">>"
-            mode = "a"
+        if "2>>" in command:
+            operator, mode, is_error_redir ="2>>", "a", True
+        elif "2>" in command:
+            operator, mode, is_error_redir ="2>", "w", True   
+        elif ">>" in command:
+            operator, mode, is_error_redir =">>", "a", False
         elif ">" in command:
-            operator = "1>" if "1>" in command else ">"
-            mode = "w"
+            operator, mode, is_error_redir =">", "w", False            
         else:
             operator = None
             
         if operator:
             cmd_part, fileName_part = command.split(operator, 1)
-            if cmd_part.endswith("1"):
-                cmd_part= cmd_part[:-1]
+            if not is_error_redir and cmd_part.strip().endswith("1"):
+                cmd_part= cmd_part.strip()[:-1]
+                
             str_split = shlex.split(cmd_part)
             fileName = fileName_part.strip()
+            
             os.makedirs(os.path.dirname(os.path.abspath(fileName)), exist_ok=True)
             f = open(fileName, mode)
+            
+            if is_error_redir:
+                f_err = f
+            else:
+                f_out = f
             
         else:
             str_split =shlex.split(command)
