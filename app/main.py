@@ -49,7 +49,7 @@ def main():
             str_split =shlex.split(command)
         
         if str_split[0] == "echo":
-            print(" ".join(str_split[1::]), file = f)
+            print(" ".join(str_split[1::]), file = f_out)
             
             
         elif str_split[0] == "pwd":
