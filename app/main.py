@@ -18,9 +18,17 @@ def main():
             continue
         if command == "exit":
             break
-        
-        if ">" in command:
-            cmd_part, fileName_part = command.split(">", 1)
+        if ">>" in command:
+            operator ="1>>" if "1>>" in command else ">>"
+            mode = "a"
+        elif ">" in command:
+            operator = "1>" if "1>" in command else ">"
+            mode = "w"
+        else:
+            operator = None
+            
+        if operator:
+            cmd_part, fileName_part = command.split(operator, 1)
             if cmd_part.endswith("1"):
                 cmd_part= cmd_part[:-1]
             str_split = shlex.split(cmd_part)
