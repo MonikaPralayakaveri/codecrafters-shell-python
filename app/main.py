@@ -32,10 +32,9 @@ def main():
             if cmd_part.endswith("1"):
                 cmd_part= cmd_part[:-1]
             str_split = shlex.split(cmd_part)
-            f = open(fileName_part.strip(), "w")
-            if ">" in command or "1>" in command or "2>" in command:
-                os.system(command)
-                continue
+            fileName = fileName_part.strip()
+            os.makedirs(os.path.dirname(os.path.abspath(fileName)), exist_ok=True)
+            f = open(filename, mode)
             
         else:
             str_split =shlex.split(command)
