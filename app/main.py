@@ -5,6 +5,11 @@ import subprocess
 import shlex
 import readline
 
+SHELL_builtin = ["exit", "echo","type"]
+
+def auto_completion(text, state):
+    matches = [command + " " for command in SHELL_builtin if command.startswith(text)]
+
 def main():
     # TODO: Uncomment the code below to pass the first stage
     while True:
@@ -18,6 +23,8 @@ def main():
             continue
         if command == "exit":
             break
+        
+        # --- REDIRECTON DETECTION ---
         if "2>>" in command:
             operator, mode, is_error_redir ="2>>", "a", True
         elif "2>" in command:
@@ -28,7 +35,8 @@ def main():
             operator, mode, is_error_redir =">", "w", False            
         else:
             operator = None
-            
+        
+        # --- REDIRECTION PLUMBING ---
         if operator:
             cmd_part, fileName_part = command.split(operator, 1)
             if not is_error_redir and cmd_part.strip().endswith("1"):
@@ -46,6 +54,7 @@ def main():
                 f_out = f_file
             
         else:
+            # If no operator, we use the original parsed command
             str_split =shlex.split(command)
         
         if str_split[0] == "echo":
@@ -53,9 +62,11 @@ def main():
             
             
         elif str_split[0] == "pwd":
+            # Navigation: Finding where we are
             print(os.getcwd())
         #for cd
         elif str_split[0] == "cd":
+            # NAVIGATION
             if len(str_split) >1:
                 cdpath = str_split[1]
                 # Convert shortcuts like '~' into the full home directory path
@@ -68,7 +79,7 @@ def main():
             else:
                 # Default behavior: If user just types 'cd', move to the Home folder
                 os.chdir(os.path.expanduser("~"))
-                
+                   
         elif str_split[0] == "type":
             builtin = ["exit", "echo","type","pwd","cd"]
             if str_split[1] in builtin:
@@ -80,6 +91,7 @@ def main():
                 print(str_split[1]+": "+"not found")
         
         else:
+            # EXTERNAL COMMANDS & REDIRECTION
             # grab the command name(eg., 'ls') and search the sys PATH for its file Location.
             command_name = str_split[0]
             path = shutil.which(command_name) #This looks in /usr/bin, /bin, etc.
@@ -89,6 +101,7 @@ def main():
                 subprocess.run(str_split, stdout=f_out, stderr = f_err)
             else:
                 print(command_name+": "+"command not found", file = f_err)
+        # CLEANUP 
         if f_out is not sys.stdout:
                 f_out.close() 
         if f_err is not sys.stderr:
