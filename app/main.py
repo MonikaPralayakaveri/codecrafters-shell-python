@@ -3,7 +3,7 @@ import shutil
 import os
 import subprocess
 import shlex
-
+import readline
 
 def main():
     # TODO: Uncomment the code below to pass the first stage
