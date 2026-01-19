@@ -9,9 +9,16 @@ SHELL_builtin = ["exit", "echo","type"]
 
 def auto_completion(text, state):
     matches = [command + " " for command in SHELL_builtin if command.startswith(text)]
+    return matches[state] if state <len(matches) else None
 
+# mail shell loop
 def main():
+    
+    readline.set_completer(auto_completion)
+    readline.parse_and_bind("tab: complete")
+    
     # TODO: Uncomment the code below to pass the first stage
+    
     while True:
         sys.stdout.write("$ ")
         command = input()
