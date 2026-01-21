@@ -15,7 +15,7 @@ def get_executables_from_path():
     for directory in path_dirs:
         
         #Skip if folder does not exist
-        if not os.path.isdirs(directory):
+        if not os.path.isdir(directory):
             continue
         
         try:
