@@ -7,9 +7,38 @@ import readline
 
 SHELL_builtin = ["exit", "echo","type"]
 
+def executables_from_path():
+    executables = set()
+    
+    path_dirs = os.environ.get("PATH", "").split(os.pathsep)
+    
+    for directory in path_dirs:
+        
+        #Skip if folder does not exist
+        if not os.path.isdirs(directory):
+            continue
+        
+        try:
+            #check each file in folder
+            for file in os.listdir(directory):
+                full_path = os.path.join(directory, file)
+                
+                #keep only executable files
+                if os.path.isfile(full_path) and os.access(full_path, os.X_OK):
+                    executables.add(file)
+        except PermissionError:
+            #some folders cannot be opened
+            continue
+    return list(executables)
+
+ALL_COMMANDS = SHELL_builtin+ get_executables_from_path()
+            
+
 def auto_completion(text, state):
-    matches = [command + " " for command in SHELL_builtin if command.startswith(text)]
-    return matches[state] if state <len(matches) else None
+    matches = [command for command in SHELL_builtin if command.startswith(text)]
+    if state <len(matches):
+        return matches[state] + " " #add space after completion
+    return None
 
 # mail shell loop
 def main():
