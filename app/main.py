@@ -32,7 +32,7 @@ def get_executables_from_path():
             continue
     return list(executables)
 
-ALL_COMMANDS = SHELL_builtin+ get_executables_from_path()
+ALL_COMMANDS = sorted(list(set(SHELL_builtin+ get_executables_from_path())))
             
 last_text = None
 tab_count = 0
@@ -67,8 +67,6 @@ def auto_completion(text, state):
     if len(matches)==1:
         if state == 0:
             return matches[0]+ " "
-        else:
-            return None
     return None
     
 # mail shell loop
