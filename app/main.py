@@ -35,22 +35,30 @@ ALL_COMMANDS = SHELL_builtin+ get_executables_from_path()
             
 
 def auto_completion(text, state):
+    global last_text, tab_count
     matches = sorted([command for command in ALL_COMMANDS if command.startswith(text)])
+    
+    if text == last_text:
+        tab_count+=1
+    else:
+        tab_count = 1
+        last_text = text
     
     if not matches:
         return None
         
-    if len(matches) == 1:
-        if state == 0:
-            return matches[0]+ " "
+    if tab_count == 1:
+        sys.stdout.write("\a")
+        sys.stdout.flush()
         return None
         
-    if state ==0:
+    if tab_count ==2 and state ==0:
         sys.stdout.write("\n")
         sys.stdout.write("  ".join(matches))
         sys.stdout.write("\n")
         sys.stdout.write("$ "+text)
         sys.stdout.flush()
+        return None
     return None
 
 
