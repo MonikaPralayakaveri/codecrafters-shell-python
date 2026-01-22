@@ -91,6 +91,7 @@ def main():
             if not command.strip():
                 continue
                    
+            sys.stdout.write("$ ")
             command = input()
             str_split = shlex.split(command)
             f_out = sys.stdout
@@ -135,12 +136,12 @@ def main():
                 str_split =shlex.split(command)
             
             if str_split[0] == "echo":
-                print(" ".join(str_split[1::]), file = f_out)
+                print(" ".join(str_split[1:]), file = f_out)
                 
                 
             elif str_split[0] == "pwd":
                 # Navigation: Finding where we are
-                print(os.getcwd())
+                print(os.getcwd(), file=f_out)
             #for cd
             elif str_split[0] == "cd":
                 # NAVIGATION
