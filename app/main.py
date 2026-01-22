@@ -61,14 +61,14 @@ def auto_completion(text, state):
                 sys.stdout.write("\n")
 
                 sys.stdout.write("$ "+readline.get_line_buffer())
-                sys.stdout.flush()
-                
-                
+                sys.stdout.flush()   
             return None
     
     if len(matches)==1:
         if state == 0:
             return matches[0]+ " "
+        else:
+            return None
     return None
     
 # mail shell loop
