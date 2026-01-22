@@ -38,6 +38,9 @@ def auto_completion(text, state):
     global last_text, tab_count
     matches = [command for command in ALL_COMMANDS if command.startswith(text)]
     
+    if not matches:
+        return None
+    
     if text == last_text:
         tab_count +=1
     else:
@@ -55,9 +58,7 @@ def auto_completion(text, state):
         return None
         
     
-    if state <len(matches):
-        return matches[state] + " " #add space after completion
-    return None
+    
 
 # mail shell loop
 def main():
