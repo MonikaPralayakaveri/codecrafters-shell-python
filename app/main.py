@@ -91,7 +91,6 @@ def main():
             if not command.strip():
                 continue
                    
-            command = input()
             str_split = shlex.split(command)
             f_out = sys.stdout
             f_err = sys.stderr
