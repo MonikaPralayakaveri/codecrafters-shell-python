@@ -48,6 +48,7 @@ def auto_completion(text, state):
         else:
             tab_count = 1
             last_text = text
+        
         if len(matches)>1:
             if tab_count == 1:
                 sys.stdout.write("\a")
@@ -55,13 +56,15 @@ def auto_completion(text, state):
                 
             else:
                 sys.stdout.write("\n"+"  ".join(matches)+"\n")
-                sys.stdout.write("$"+text+readline.get_liner_buffer())
+                sys.stdout.write("$"+readline.get_liner_buffer())
                 sys.stdout.flush()
             return None
+    
     if len(matches)==1:
-        if state == 0:
-            return matches[0]+ " "
-        return None
+        try:
+            return matches[state]+ " "
+        except IndexError:
+            return None
     return None
     
 # mail shell loop
