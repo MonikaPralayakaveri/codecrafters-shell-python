@@ -5,7 +5,7 @@ import subprocess
 import shlex
 import readline
 
-SHELL_builtin = ["exit", "echo","type"]
+SHELL_builtin = ["exit", "echo","type", "pwd", "cd"]
 last_text = None
 tab_count = 0
 def get_executables_from_path():
@@ -60,7 +60,7 @@ def auto_completion(text, state):
                 sys.stdout.write("  ".join(matches))
                 sys.stdout.write("\n")
                 current_input = readline.get_line_buffer()
-                sys.stdout.write(f"${current_input}")
+                sys.stdout.write("$ "+{current_input})
                 sys.stdout.flush()
                 
                 
