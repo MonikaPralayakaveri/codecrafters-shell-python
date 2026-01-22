@@ -33,35 +33,36 @@ def get_executables_from_path():
 
 ALL_COMMANDS = SHELL_builtin+ get_executables_from_path()
             
-
+last_text = None
+tab_count = 0
 def auto_completion(text, state):
     global last_text, tab_count
-    matches = sorted([command for command in ALL_COMMANDS if command.startswith(text)])
-    
-    if text == last_text:
-        tab_count+=1
-    else:
-        tab_count = 1
-        last_text = text
+    matches = sorted([command for command in ALL_COMMANDS if command.startswith(text)])    
     
     if not matches:
         return None
-        
-    if tab_count == 1:
-        sys.stdout.write("\a")
-        sys.stdout.flush()
-        return None
-        
-    if tab_count ==2 and state ==0:
-        sys.stdout.write("\n")
-        sys.stdout.write("  ".join(matches))
-        sys.stdout.write("\n")
-        sys.stdout.write("$ "+text)
-        sys.stdout.flush()
-        return None
+    
+    if state == 0:
+        if text == last_text:
+            tab_count += 1
+        else:
+            tab_count = 1
+            last_text = text
+        if len(matches)>1:
+            if tab_count == 1:
+                sys.stdout.write("\a")
+                sys.stdout.flush()
+            elif tab_count >=2:
+                sys.stdout.write("\n"+"  ".join(matches)+"\n")
+                sys.stdout.write("$"+text+readline.get_liner_buffer())
+                sys.stdout.flush()
+    if len(matches)==1:
+        try:
+            return matches[state]+ " "
+        except IndexError:
+            return None
     return None
-
-
+    
 # mail shell loop
 def main():
     
