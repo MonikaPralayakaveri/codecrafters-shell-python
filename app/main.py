@@ -35,30 +35,22 @@ ALL_COMMANDS = SHELL_builtin+ get_executables_from_path()
             
 
 def auto_completion(text, state):
-    global last_text, tab_count
     matches = [command for command in ALL_COMMANDS if command.startswith(text)]
     
     if not matches:
         return None
-    
-    if text == last_text:
-        tab_count +=1
-    else:
-        tab_count = 1
-        last_text = text
         
-    if tab_count == 1:
-        sys.stdout.write("/a")
+    if len(matches) == 1:
+        if state == 0:
+            return matches[0]+ " "
+        return None
+        
+    if state ==0:
+        sys.stdout.write("/n" + " ".join(matches)+ "\n")
+        sys.stdout.write("$ "+text)
         sys.stdout.flush()
-        return None
+    return None
 
-    if tab_count == 2 and matches:
-        print("/n" + " ".join(matches))
-        print(f"$ {text}", end = "", flush = True)
-        return None
-        
-    
-    
 
 # mail shell loop
 def main():
