@@ -35,7 +35,26 @@ ALL_COMMANDS = SHELL_builtin+ get_executables_from_path()
             
 
 def auto_completion(text, state):
+    global last_text, tab_count
     matches = [command for command in ALL_COMMANDS if command.startswith(text)]
+    
+    if text == last_text:
+        tab_count +=1
+    else:
+        tab_count = 1
+        last_text = text
+        
+    if tab_count == 1:
+        sys.stdout.write("/a")
+        sys.stdout.flush()
+        return None
+
+    if tab_count == 2 and matches:
+        print("/n" + " ".join(matches))
+        print(f"$ {text}", end = "", flush = True)
+        return None
+        
+    
     if state <len(matches):
         return matches[state] + " " #add space after completion
     return None
