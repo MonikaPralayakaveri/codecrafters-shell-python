@@ -35,7 +35,7 @@ ALL_COMMANDS = SHELL_builtin+ get_executables_from_path()
             
 
 def auto_completion(text, state):
-    matches = [command for command in ALL_COMMANDS if command.startswith(text)]
+    matches = sorted([command for command in ALL_COMMANDS if command.startswith(text)])
     
     if not matches:
         return None
@@ -47,7 +47,7 @@ def auto_completion(text, state):
         
     if state ==0:
         sys.stdout.write("\n")
-        sys.stdout.write(" ".join(matches))
+        sys.stdout.write("  ".join(matches))
         sys.stdout.write("\n")
         sys.stdout.write("$ "+text)
         sys.stdout.flush()
