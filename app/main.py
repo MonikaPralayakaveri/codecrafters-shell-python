@@ -46,9 +46,9 @@ def auto_completion(text, state):
         return None
         
     if state ==0:
-        sys.stdout.write("/n")
+        sys.stdout.write("\n")
         sys.stdout.write(" ".join(matches))
-        sys.stdout.write("/n")
+        sys.stdout.write("\n")
         sys.stdout.write("$ "+text)
         sys.stdout.flush()
     return None
