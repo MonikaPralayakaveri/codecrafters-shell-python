@@ -55,12 +55,12 @@ def auto_completion(text, state):
                 sys.stdout.write("\a")
                 sys.stdout.flush()
                 
-            else:
+            elif tab_count>=2:
                 sys.stdout.write("\n")
                 sys.stdout.write("  ".join(matches))
                 sys.stdout.write("\n")
-                current_input = readline.get_line_buffer()
-                sys.stdout.write("$ "+{current_input})
+
+                sys.stdout.write("$ "+readline.get_line_buffer())
                 sys.stdout.flush()
                 
                 
