@@ -6,7 +6,8 @@ import shlex
 import readline
 
 SHELL_builtin = ["exit", "echo","type"]
-
+last_text = None
+tab_count = 0
 def get_executables_from_path():
     executables = set()
     
@@ -58,24 +59,27 @@ def auto_completion(text, state):
                 sys.stdout.write("\n"+"  ".join(matches)+"\n")
                 sys.stdout.write("$"+readline.get_liner_buffer())
                 sys.stdout.flush()
+                
+                readline.redisplay()
             return None
     
     if len(matches)==1:
-        try:
-            return matches[state]+ " "
-        except IndexError:
-            return None
+        if state == 0:
+            return matches[0]+ " "
     return None
     
 # mail shell loop
 def main():
     
     readline.set_completer(auto_completion)
-    readline.parse_and_bind("tab: complete")
+    if 'libedit' in readline.__doc__:
+        readline.parse_and_bind("bind ^I rl_complete")
+    else:
+        readline.parse_and_bind("tab: complete")
     
     # TODO: Uncomment the code below to pass the first stage
     
-    while True:
+    while True:        
         sys.stdout.write("$ ")
         command = input()
         str_split = shlex.split(command)
