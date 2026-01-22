@@ -82,7 +82,7 @@ def main():
     
     while True: 
         try:
-            sys.stdout.write("$ ")
+            command = input("$ ")
             # Reset tab state whenever a new command starts
             global last_text, tab_count
             last_text = None
@@ -90,7 +90,7 @@ def main():
             
             if not command.strip():
                 continue
-                
+                   
             command = input()
             str_split = shlex.split(command)
             f_out = sys.stdout
