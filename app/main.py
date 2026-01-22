@@ -82,7 +82,6 @@ def main():
     
     while True: 
         try:
-            command = input("$ ")
             # Reset tab state whenever a new command starts
             global last_text, tab_count
             last_text = None
