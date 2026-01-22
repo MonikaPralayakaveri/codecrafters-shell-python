@@ -56,11 +56,14 @@ def auto_completion(text, state):
                 sys.stdout.flush()
                 
             else:
-                sys.stdout.write("\n"+"  ".join(matches)+"\n")
-                sys.stdout.write("$"+readline.get_liner_buffer())
+                sys.stdout.write("\n")
+                sys.stdout.write("  ".join(matches))
+                sys.stdout.write("\n")
+                current_input = readline.get_line_buffer()
+                sys.stdout.write(f"${current_input}")
                 sys.stdout.flush()
                 
-                readline.redisplay()
+                
             return None
     
     if len(matches)==1:
