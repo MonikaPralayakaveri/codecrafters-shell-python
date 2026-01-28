@@ -33,12 +33,34 @@ def get_executables_from_path():
     return list(executables)
 
 ALL_COMMANDS = sorted(list(set(SHELL_builtin+ get_executables_from_path())))
+
+def longest_common_prefix(strings):
+    if not strings:
+        return ""
+    
+    prefix = strings[0]
+    
+    for s in strings[1:]:
+        while i< len(prefix) and i < len(s) and prefix[i] == s[i]:
+            i +=1
+        prefix = prefix[:i]
+        if not prefix:
+            break
+    return prefix
             
 last_text = None
 tab_count = 0
 def auto_completion(text, state):
     global last_text, tab_count
     matches = sorted([command for command in ALL_COMMANDS if command.startswith(text)])    
+    
+    if len(matches) > 1:
+        lcp = longest_common_prefix(matches)
+        
+        if len(lcp)> len(text):
+            if state == 0:
+                return lcp
+            return None
     
     if not matches:
         return None
