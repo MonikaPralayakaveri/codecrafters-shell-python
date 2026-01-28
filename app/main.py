@@ -41,6 +41,7 @@ def longest_common_prefix(strings):
     prefix = strings[0]
     
     for s in strings[1:]:
+        i = 0
         while i< len(prefix) and i < len(s) and prefix[i] == s[i]:
             i +=1
         prefix = prefix[:i]
@@ -54,16 +55,23 @@ def auto_completion(text, state):
     global last_text, tab_count
     matches = sorted([command for command in ALL_COMMANDS if command.startswith(text)])    
     
-    if len(matches) > 1:
-        lcp = longest_common_prefix(matches)
-        
-        if len(lcp)> len(text):
-            if state == 0:
-                return lcp
-            return None
-    
     if not matches:
         return None
+    
+    if len(matches)==1:
+        if state == 0:
+            return matches[0]+ " "
+        return None
+    
+    lcp = longest_common_prefix(matches)
+    if len(lcp) > len(text): 
+        last_text = lcp 
+        tab_count = 0      
+        if state == 0:
+            return lcp
+        return None
+    
+    
     
     if state == 0:
         if text == last_text:
@@ -84,12 +92,9 @@ def auto_completion(text, state):
 
                 sys.stdout.write("$ "+readline.get_line_buffer())
                 sys.stdout.flush()   
-            return None
-    
-    if len(matches)==1:
-        if state == 0:
-            return matches[0]+ " "
     return None
+    
+    
     
 # mail shell loop
 def main():
