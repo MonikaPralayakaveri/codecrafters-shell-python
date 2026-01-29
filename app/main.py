@@ -119,42 +119,23 @@ def main():
                 #parse both sides
                 left_args = shlex.split(left_cmd.strip())
                 right_args = shlex.split(right_cmd.strip())
+                #start first command
+                p1 = subprocess.popen(
+                    left_args,
+                    stdout = subprocess.PIPE
+                )
                 
-                #creating the pipe
-                read_pd, write_pd = os.pipe()
-                
-                #fork first process(LEFT command)
-                pid1 = os.fork()
-                
-                if pid1 == 0:
-                    #child 1
-                    os.dup2(write_pd, sys.stdout.fileno()) #stdout ->pipe write
-                    os.close(read_pd)
-                    os.close(write_pd)
-                    
-                    #execute left command
-                    os.execvp(left_args[0], left_args)
-                
-                #fork second process(RIGHT command)
-                pid2 = os.fork()
-                
-                if pid2 == 0:
-                    #child 2
-                    os.dup2(read_pd, sys.stdout.fileno()) #stdout ->pipe write
-                    os.close(write_pd)
-                    os.close(read_pd)
-                    
-                    #execute right command
-                    os.execvp(right_args[0], right_args)
-                
-                #parent process
-                os.close(read_pd)
-                os.close(write_pd)
-                
-                
-                #wait for both children
-                os.waitpid(pid1, 0)
-                os.waitpid(pid2, 0)
+                #start second command, reading from first
+                p2 = subprocess.Popen(
+                    right_args,
+                    stdin=p1.stdout,
+                    stdout =sys.stdout,
+                    stderr=sys.stderr
+                )
+                #imp: close p1 stdout in parent
+                p1.stdout.close()
+                #wait for second command to finish
+                p2.wait()
                 continue
             
             global last_text, tab_count
