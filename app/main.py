@@ -120,7 +120,7 @@ def main():
                 left_args = shlex.split(left_cmd.strip())
                 right_args = shlex.split(right_cmd.strip())
                 #start first command
-                p1 = subprocess.popen(
+                p1 = subprocess.Popen(
                     left_args,
                     stdout = subprocess.PIPE
                 )
