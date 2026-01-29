@@ -133,7 +133,7 @@ def main():
                     os.close(write_pd)
                     
                     #execute left command
-                    os.execlc(left_args[0], left_args)
+                    os.execvp(left_args[0], left_args)
                 
                 #fork second process(RIGHT command)
                 pid2 = os.fork()
@@ -145,7 +145,7 @@ def main():
                     os.close(write_pd)
                     
                     #execute right command
-                    os.execlc(right_args[0], right_args)
+                    os.execvp(right_args[0], right_args)
                 
                 #parent process
                 os.close(read_pd)
