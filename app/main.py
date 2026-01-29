@@ -111,6 +111,52 @@ def main():
         try:
             command = input("$ ")
             # Reset tab state whenever a new command starts
+
+            if "|" in command:
+                #splitting the command into two parts
+                left_cmd, right_cmd = command.split("|", 1)
+                
+                #parse both sides
+                left_args = shlex.split(left_cmd.strip())
+                right_args = shlex.split(right_cmd.strip())
+                
+                #creating the pipe
+                read_pd, write_pd = os.pipe()
+                
+                #fork first process(LEFT command)
+                pid1 = os.fork()
+                
+                if pid1 == 0:
+                    #child 1
+                    os.dup2(write_pd, sys.stdout.fileno()) #stdout ->pipe write
+                    os.close(read_pd)
+                    os.close(write_pd)
+                    
+                    #execute left command
+                    os.execlc(left_args[0], left_args)
+                
+                #fork second process(RIGHT command)
+                pid2 = os.fork()
+                
+                if pid2 == 0:
+                    #child 2
+                    os.dup2(write_pd, sys.stdout.fileno()) #stdout ->pipe write
+                    os.close(read_pd)
+                    os.close(write_pd)
+                    
+                    #execute right command
+                    os.execlc(right_args[0], right_args)
+                
+                #parent process
+                os.close(read_pd)
+                os.close(write_pd)
+                
+                
+                #wait for both processes
+                os.waitpid(pid1, 0)
+                os.waitpid(pid2, 0)
+                continue
+            
             global last_text, tab_count
             last_text = None
             tab_count = 0
