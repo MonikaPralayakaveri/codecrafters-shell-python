@@ -141,8 +141,8 @@ def main():
                 if pid2 == 0:
                     #child 2
                     os.dup2(read_pd, sys.stdout.fileno()) #stdout ->pipe write
-                    os.close(read_pd)
                     os.close(write_pd)
+                    os.close(read_pd)
                     
                     #execute right command
                     os.execvp(right_args[0], right_args)
@@ -152,7 +152,7 @@ def main():
                 os.close(write_pd)
                 
                 
-                #wait for both processes
+                #wait for both children
                 os.waitpid(pid1, 0)
                 os.waitpid(pid2, 0)
                 continue
