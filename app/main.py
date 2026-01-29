@@ -140,7 +140,7 @@ def main():
                 
                 if pid2 == 0:
                     #child 2
-                    os.dup2(write_pd, sys.stdout.fileno()) #stdout ->pipe write
+                    os.dup2(read_pd, sys.stdout.fileno()) #stdout ->pipe write
                     os.close(read_pd)
                     os.close(write_pd)
                     
