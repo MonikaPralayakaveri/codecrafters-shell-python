@@ -96,22 +96,27 @@ def auto_completion(text, state):
                 sys.stdout.flush()   
     return None
     
-def run_builtin(cmd_parts):
-    if cmd_parts[0] == "echo":  
-        print(" ".join(cmd_parts[1:]))
+def capture_builtin_output(cmd_parts):
+    """
+    Runs a builtin command and captures its stdout as a string.
+    """
+    buffer = io.StringIO()
+    
+    with contextlib.redirect_stdout(buffer):
+        if cmd_parts[0] == "echo":  
+            print(" ".join(cmd_parts[1:]))         
+        elif cmd_parts[0] == "type":
+            builtin = ["exit", "echo","type", "pwd", "cd"]
+            if cmd_parts[1] in builtin:
+                print(cmd_parts[1]+ " is a shell builtin")
+            elif shutil.which(cmd_parts[1]):
+                print(cmd_parts[1]+ " is " + shutil.which(cmd_parts[1]))
+            else:
+                print(cmd_parts[1] + " not found")
+        elif cmd_parts[0] == "pwd":
+            print(os.getcwd())
                 
-    elif cmd_parts[0] == "type":
-        builtin = ["exit", "echo","type", "pwd", "cd"]
-        if cmd_parts[1] in builtin:
-            print(cmd_parts[1]+ " is a shell builtin")
-        elif shutil.which(cmd_parts[1]):
-            print(cmd_parts[1]+ " is " + shutil.which(cmd_parts[1]))
-        else:
-            print(cmd_parts[1] + " not found")
-    elif cmd_parts[0] == "pwd":
-        print(os.getcwd())
-                
-                
+    return buffer.getvalue()
         
         
 # mail shell loop
