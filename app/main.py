@@ -150,62 +150,41 @@ def main():
             # Reset tab state whenever a new command starts
 
             if "|" in command:
-                #splitting the command into two parts
-                left_cmd, right_cmd = command.split("|", 1)
+                parts = [shlex.split(p.strip()) for p in command.split("|")]
+                processes = []
                 
-                #parse both sides
-                left_args = shlex.split(left_cmd.strip())
-                right_args = shlex.split(right_cmd.strip())
+                prev_pipe = None
                 
-                left_is_builtin = left_args[0] in SHELL_builtin
-                right_is_builtin = right_args[0] in SHELL_builtin
+                if prev_pipe is None:
+                    stdin = None
+                else:
+                    stdin = prev_pipe
                 
-                if left_is_builtin and not right_is_builtin:
-                    
-                    #case1: builtin | external(already working)
-                    p = subprocess.Popen(
-                        right_args,
-                        stdin = subprocess.PIPE,
-                        stdout = sys.stdout,
-                        stderr = sys.stderr
-                    )
-                    output = capture_builtin_output(left_args)
-                    p.communicate(output.encode())
-                    continue
-                
-                # CASE 2: external | builtin 
-                if not left_is_builtin and right_is_builtin:
-                    #Run left command but Ignore its output
-                    subprocess.run(left_args, stdout = subprocess.DEVNULL)
-                    
-                    # Run builtin normally
-                    run_builtin(right_args)
-                    continue
-                
-                # CASE 3: external | external
-                if not left_is_builtin and not right_is_builtin:
-                    p1 = subprocess.Popen(left_args, stdout = subprocess.PIPE)
-                    p2 = subprocess.Popen(
-                        right_args,
-                        stdin = p1.stdout,
-                        stdout = sys.stdout,
-                        stderr = sys.stderr
-                    )
-                    p1.stdout.close()
-                    p2.wait()
-                    continue
-                
-                #start second command, reading from first
-                p2 = subprocess.Popen(
-                    right_args,
-                    stdin=p1.stdout,
-                    stdout =sys.stdout,
-                    stderr=sys.stderr
+                #Determine stdout
+                if i == len(parts) -1:
+                    stdout =sys.stdout
+                else:
+                    stdout =subprocess.PIPE
+            
+                #start the process
+                p = subprocess.Popen(
+                    args,
+                    stdin = stdin,
+                    stdout = stdout,
+                    stderr = sys.stderr
                 )
-                #imp: close p1 stdout in parent
-                p1.stdout.close()
-                #wait for second command to finish
-                p2.wait()
+                
+                #close previous pipe in parent
+                if prev_pipe is not None:
+                    prev_pipe.close()
+                
+                #save pipe for next command    
+                prev_pipe = p.stdout
+                processes.append(p)
+                
+                #wait for all processes
+                for p in processes:
+                    p.wait()
                 continue
             
             global last_text, tab_count
