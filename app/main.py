@@ -154,7 +154,8 @@ def main():
                 processes = []
                 
                 prev_pipe = None
-                
+            for i, args in enumerate(parts):
+                #Determine stdin
                 if prev_pipe is None:
                     stdin = None
                 else:
@@ -183,9 +184,9 @@ def main():
                 processes.append(p)
                 
                 #wait for all processes
-                for p in processes:
-                    p.wait()
-                continue
+            for p in processes:
+                p.wait()
+            continue
             
             global last_text, tab_count
             last_text = None
