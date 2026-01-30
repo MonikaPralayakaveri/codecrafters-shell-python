@@ -1,9 +1,11 @@
+import io
 import sys
 import shutil
 import os
 import subprocess
 import shlex
 import readline
+import contextlib
 
 SHELL_builtin = ["exit", "echo","type", "pwd", "cd"]
 last_text = None
@@ -94,8 +96,33 @@ def auto_completion(text, state):
                 sys.stdout.flush()   
     return None
     
+def run_builtin_capture(cmd_parts):
+        
+    """
+    Runs a builtin command and captures its stdout as a string.
+    """
+    buffer = io.StringIO()
+    with contextlib.redirect_stdout(buffer):
+        if cmd_parts[0] == "echo":
+            print(" ".join(cmd_parts[1:]))
+            
+        elif cmd_parts[0] == "type":
+            builtin = ["exit", "echo","type", "pwd", "cd"]
+            if cmd_parts[1] in builtin:
+                print(cmd_parts[1]+ " is a shell builtin")
+            elif shutil.which(cmd_parts[1]):
+                print(cmd_parts[1]+ " is " + shutil.which(cmd_parts[1]))
+            else:
+                print(cmd_parts[1] + " not found")
+                
+        elif cmd_parts[0] == "pwd":
+            print(os.getcwd())
     
-    
+    return buffer.getvalue()
+                
+                
+        
+        
 # mail shell loop
 def main():
     
