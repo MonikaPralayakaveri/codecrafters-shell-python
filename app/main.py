@@ -193,10 +193,7 @@ def main():
                         prev_pipe.close()
                 
                     #save pipe for next command    
-                    if not is_builtin and stdout == subprocess.PIPE:
-                        prev_pipe = p.stdout
-                    else:
-                        prev_pipe = None
+                    Prev_pipe = p.stdout if stdout == subprocess.Pipe else None
                     processes.append(p)
                     i+=1
                 
