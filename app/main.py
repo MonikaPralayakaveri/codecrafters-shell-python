@@ -154,21 +154,12 @@ def main():
                 processes = []
                 
                 prev_pipe = None
-                for i, args in enumerate(parts):
+                i = 0
+                while i < len(parts):
+                    args =parts[i]
                     is_builtin = args[0] in SHELL_builtin
                     is_last =(i== len(parts)-1)
                     
-                    #Determine stdin
-                    if prev_pipe is None:
-                        stdin = None
-                    else:
-                        stdin = prev_pipe
-                
-                    #Determine stdout
-                    if i == len(parts) -1:
-                        stdout =sys.stdout
-                    else:
-                        stdout =subprocess.PIPE
                     if is_builtin:
                         if is_last:
                             run_builtin(args)
@@ -186,6 +177,17 @@ def main():
                             )
                             p.communicate(output.encode())
                             break
+                    
+                    #external
+                    stdin = prev_pipe if prev_pipe is not None Else None
+                    stdout = sys.stdout if is_last else subprocess.PIPE
+                    
+                    p = subprocess.Popen(
+                        args,
+                        stdin = stdin,
+                        stdout = stdout,
+                        stderr = sys.stderr
+                    )
                     #close previous pipe in parent
                     if prev_pipe is not None:
                         prev_pipe.close()
@@ -196,6 +198,7 @@ def main():
                     else:
                         prev_pipe = None
                     processes.append(p)
+                    i+=1
                 
                     #wait for all processes
                 for p in processes:
