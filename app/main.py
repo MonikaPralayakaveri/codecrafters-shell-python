@@ -176,16 +176,16 @@ def main():
                         else:
                             #Builtin | external
                             output = capture_builtin_output(args)
-                            prev_pipe = io.BytesIO(output.encode())
-                            continue
-                    #start the process
-                    p = subprocess.Popen(
-                        args,
-                        stdin = stdin,
-                        stdout = stdout,
-                        stderr = sys.stderr
-                    )
-                
+                            next_args = parts[i+1]
+                            #start the process
+                            p = subprocess.Popen(
+                                args,
+                                stdin = stdin,
+                                stdout = stdout,
+                                stderr = sys.stderr
+                            )
+                            p.communicate(output.encode())
+                            break
                     #close previous pipe in parent
                     if prev_pipe is not None:
                         prev_pipe.close()
