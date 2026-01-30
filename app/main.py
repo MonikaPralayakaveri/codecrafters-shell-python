@@ -191,7 +191,10 @@ def main():
                         prev_pipe.close()
                 
                     #save pipe for next command    
-                    prev_pipe = p.stdout
+                    if not is_builtin and stdout == subprocess.PIPE:
+                        prev_pipe = p.stdout
+                    else:
+                        prev_pipe = None
                     processes.append(p)
                 
                     #wait for all processes
