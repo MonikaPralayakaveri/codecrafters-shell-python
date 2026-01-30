@@ -193,7 +193,7 @@ def main():
                         prev_pipe.close()
                 
                     #save pipe for next command    
-                    Prev_pipe = p.stdout if stdout == subprocess.Pipe else None
+                    Prev_pipe = p.stdout if stdout == subprocess.PIPE else None
                     processes.append(p)
                     i+=1
                 
