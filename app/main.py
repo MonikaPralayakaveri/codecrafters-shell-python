@@ -96,29 +96,20 @@ def auto_completion(text, state):
                 sys.stdout.flush()   
     return None
     
-def run_builtin_capture(cmd_parts):
-        
-    """
-    Runs a builtin command and captures its stdout as a string.
-    """
-    buffer = io.StringIO()
-    with contextlib.redirect_stdout(buffer):
-        if cmd_parts[0] == "echo":
-            print(" ".join(cmd_parts[1:]))
-            
-        elif cmd_parts[0] == "type":
-            builtin = ["exit", "echo","type", "pwd", "cd"]
-            if cmd_parts[1] in builtin:
-                print(cmd_parts[1]+ " is a shell builtin")
-            elif shutil.which(cmd_parts[1]):
-                print(cmd_parts[1]+ " is " + shutil.which(cmd_parts[1]))
-            else:
-                print(cmd_parts[1] + " not found")
+def run_builtin(cmd_parts):
+    if cmd_parts[0] == "echo":  
+        print(" ".join(cmd_parts[1:]))
                 
-        elif cmd_parts[0] == "pwd":
-            print(os.getcwd())
-    
-    return buffer.getvalue()
+    elif cmd_parts[0] == "type":
+        builtin = ["exit", "echo","type", "pwd", "cd"]
+        if cmd_parts[1] in builtin:
+            print(cmd_parts[1]+ " is a shell builtin")
+        elif shutil.which(cmd_parts[1]):
+            print(cmd_parts[1]+ " is " + shutil.which(cmd_parts[1]))
+        else:
+            print(cmd_parts[1] + " not found")
+    elif cmd_parts[0] == "pwd":
+        print(os.getcwd())
                 
                 
         
@@ -146,11 +137,44 @@ def main():
                 #parse both sides
                 left_args = shlex.split(left_cmd.strip())
                 right_args = shlex.split(right_cmd.strip())
-                #start first command
-                p1 = subprocess.Popen(
-                    left_args,
-                    stdout = subprocess.PIPE
-                )
+                
+                left_is_builtin = left_args[0] in SHELL_builtin
+                right_is_builtin = right_args[0] in SHELL_builtin
+                
+                if left_is_builtin and not right_is_builtin:
+                    
+                    #case1: builtin | external(already working)
+                    p = subprocess.Popen(
+                        right_args,
+                        stdin = subprocess.PIPE,
+                        stdout = sys.stdout,
+                        stderr = sys.stderr
+                    )
+                    output = capture_builtin_output(left_args)
+                    p.communicate(output.encode())
+                    continue
+                
+                # CASE 2: external | builtin 
+                if not left_is_builtin and right_is_builtin:
+                    #Run left command but Ignore its output
+                    subprocess.run(left_args, stdout = subprocess.DEVNULL)
+                    
+                    # Run builtin normally
+                    run_builtin(right_args)
+                    continue
+                
+                # CASE 3: external | external
+                if not left_is_builtin and not right_is_builtin:
+                    p1 = subprocess.Popen(left_args, stdout = subprocess.PIPE)
+                    p2 = subprocess.Popen(
+                        right_args,
+                        stdin = p1.stdout,
+                        stdout = sys.stdout,
+                        stderr = sys.stderr
+                    )
+                    p1.stdout.close()
+                    p2.wait()
+                    continue
                 
                 #start second command, reading from first
                 p2 = subprocess.Popen(
