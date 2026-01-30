@@ -154,39 +154,39 @@ def main():
                 processes = []
                 
                 prev_pipe = None
-            for i, args in enumerate(parts):
-                #Determine stdin
-                if prev_pipe is None:
-                    stdin = None
-                else:
-                    stdin = prev_pipe
+                for i, args in enumerate(parts):
+                    #Determine stdin
+                    if prev_pipe is None:
+                        stdin = None
+                    else:
+                        stdin = prev_pipe
                 
-                #Determine stdout
-                if i == len(parts) -1:
-                    stdout =sys.stdout
-                else:
-                    stdout =subprocess.PIPE
+                    #Determine stdout
+                    if i == len(parts) -1:
+                        stdout =sys.stdout
+                    else:
+                        stdout =subprocess.PIPE
             
-                #start the process
-                p = subprocess.Popen(
-                    args,
-                    stdin = stdin,
-                    stdout = stdout,
-                    stderr = sys.stderr
-                )
+                    #start the process
+                    p = subprocess.Popen(
+                        args,
+                        stdin = stdin,
+                        stdout = stdout,
+                        stderr = sys.stderr
+                    )
                 
-                #close previous pipe in parent
-                if prev_pipe is not None:
-                    prev_pipe.close()
+                    #close previous pipe in parent
+                    if prev_pipe is not None:
+                        prev_pipe.close()
                 
-                #save pipe for next command    
-                prev_pipe = p.stdout
-                processes.append(p)
+                    #save pipe for next command    
+                    prev_pipe = p.stdout
+                    processes.append(p)
                 
-                #wait for all processes
-            for p in processes:
-                p.wait()
-            continue
+                    #wait for all processes
+                for p in processes:
+                    p.wait()
+                continue
             
             global last_text, tab_count
             last_text = None
