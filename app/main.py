@@ -165,7 +165,7 @@ def main():
                     subprocess.run(left_args, stdout = subprocess.DEVNULL)
                     
                     # Run builtin normally
-                    run_builtin(right_args)
+                    capture_builtin_output(right_args)
                     continue
                 
                 # CASE 3: external | external
