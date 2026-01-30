@@ -117,7 +117,21 @@ def capture_builtin_output(cmd_parts):
             print(os.getcwd())
                 
     return buffer.getvalue()
-        
+def run_builtin(cmd_parts):
+    if cmd_parts[0] == "echo":
+        print(" ".join(cmd_parts[1:]))
+
+    elif cmd_parts[0] == "type":
+        builtin = ["exit", "echo", "type", "pwd", "cd"]
+        if cmd_parts[1] in builtin:
+            print(f"{cmd_parts[1]} is a shell builtin")
+        elif shutil.which(cmd_parts[1]):
+            print(f"{cmd_parts[1]} is {shutil.which(cmd_parts[1])}")
+        else:
+            print(f"{cmd_parts[1]} not found")
+
+    elif cmd_parts[0] == "pwd":
+        print(os.getcwd())   
         
 # mail shell loop
 def main():
@@ -165,7 +179,7 @@ def main():
                     subprocess.run(left_args, stdout = subprocess.DEVNULL)
                     
                     # Run builtin normally
-                    capture_builtin_output(right_args)
+                    run_builtin(right_args)
                     continue
                 
                 # CASE 3: external | external
