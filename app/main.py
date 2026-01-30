@@ -179,7 +179,7 @@ def main():
                             break
                     
                     #external
-                    stdin = prev_pipe if prev_pipe is not None Else None
+                    stdin = prev_pipe if prev_pipe is not None else None
                     stdout = sys.stdout if is_last else subprocess.PIPE
                     
                     p = subprocess.Popen(
