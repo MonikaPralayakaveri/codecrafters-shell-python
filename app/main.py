@@ -155,6 +155,9 @@ def main():
                 
                 prev_pipe = None
                 for i, args in enumerate(parts):
+                    is_builtin = args[0] in SHELL_builtin
+                    is_last =(i== len(parts)-1)
+                    
                     #Determine stdin
                     if prev_pipe is None:
                         stdin = None
@@ -166,7 +169,15 @@ def main():
                         stdout =sys.stdout
                     else:
                         stdout =subprocess.PIPE
-            
+                    if is_builtin:
+                        if is_last:
+                            run_builtin(args)
+                            break
+                        else:
+                            #Builtin | external
+                            output = capture_builtin_output(args)
+                            prev_pipe = io.BytesIO(output.encode())
+                            continue
                     #start the process
                     p = subprocess.Popen(
                         args,
