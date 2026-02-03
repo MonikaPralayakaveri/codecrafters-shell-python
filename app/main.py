@@ -192,35 +192,23 @@ def main():
                     is_builtin = args[0] in SHELL_builtin
                     is_last =(i== len(parts)-1)
                     
-                    # builtin at end: external | builtin
-                    if is_builtin and is_last:
-                        if is_last:
-                            run_builtin(args)
-                            break
-                        
-                        #Builtin | external
-                        if is_builtin:
-                            prev_output = capture_builtin_output(args)
-                            i+=1
-                            continue
-                        # external command
-                        if prev_output is not None:
-                            p = subprocess.Popen(
-                                args,
-                                stdin = subprocess.PIPE,
-                                stdout = subprocess.PIPE if not is_last else sys.stdout,
-                                stderr = sys.stderr
-                            )
-                            prev_output, _ = p.communicate(prev_output.encode())
-                        else:
-                            p = subprocess.Popen(
-                                args,
-                                stdout = stdout if is_last else subprocess.PIPE,
-                                stderr = sys.stderr
-                            )
-                            prev_output = None
-                    
+                    #Builtin | external
+                    if is_builtin:
+                        prev_output = capture_builtin_output(args)
                         i+=1
+                        continue
+                    # external command
+                    p = subprocess.Popen(
+                        args,
+                        stdin = subprocess.PIPE,
+                        stdout = subprocess.PIPE if not is_last else sys.stdout,
+                        stderr = sys.stderr
+                    )
+                    
+                    if prev_output is not None:
+                        prev_output, _ = p.communicate(prev_output.encode())
+                    else:
+                        p.wait()
                     continue
                 
             global last_text, tab_count
