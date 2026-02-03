@@ -186,13 +186,14 @@ def main():
                 # ===============================
                 i = 0
                 prev_output = None
+                
                 while i<len(parts):
                     args =parts[i]
                     is_builtin = args[0] in SHELL_builtin
                     is_last =(i== len(parts)-1)
                     
                     # builtin at end: external | builtin
-                    if is_builtin:
+                    if is_builtin and is_last:
                         if is_last:
                             run_builtin(args)
                             break
@@ -207,7 +208,7 @@ def main():
                         if prev_output is not None:
                             p = subprocess.Popen(
                                 args,
-                                stdin = stdin,
+                                stdin = subprocess.PIPE,
                                 stdout = subprocess.PIPE if not is_last else sys.stdout,
                                 stderr = sys.stderr
                             )
