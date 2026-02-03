@@ -192,6 +192,9 @@ def main():
                     is_builtin = args[0] in SHELL_builtin
                     is_last =(i== len(parts)-1)
                     
+                    if is_builtin and prev_output is None and is_last:
+                        run_builtin(args)
+                        break
                     #Builtin | external
                     if is_builtin:
                         prev_output = capture_builtin_output(args)
