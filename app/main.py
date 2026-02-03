@@ -209,7 +209,8 @@ def main():
                         prev_output, _ = p.communicate(prev_output.encode())
                     else:
                         p.wait()
-                    continue
+                    i +=1
+                continue
                 
             global last_text, tab_count
             last_text = None
