@@ -151,57 +151,78 @@ def main():
 
             if "|" in command:
                 parts = [shlex.split(p.strip()) for p in command.split("|")]
-                processes = []
+                has_builtin = any(p[0] in SHELL_builtin for p in parts)
                 
-                prev_pipe = None
+                # ===============================
+                # CASE 1: NO BUILTINS (pure external pipeline)
+                # ===============================
+                
+                if not has_builtin:
+                    prev_pipe = None
+                    processes = []
+                    for i, args in enumerate(parts):
+                        stdin = prev_pipe
+                        stdout = subprocess.PIPE if i<len(parts) - 1 else sys.stdout
+                    
+                        p = subprocess.Popen(
+                            args,
+                            stdin= stdin,
+                            stdout = stdout,
+                            stderr=sys.stderr
+                        )
+                    
+                        if prev_pipe is not None:
+                            prev_pipe.close()
+                        
+                        prev_pipe = p.stdout
+                        processes.append(p)
+                    
+                    for p in processes:
+                        p.wait()
+                    continue
+                
+                # ===============================
+                # CASE 2: PIPELINE WITH BUILTIN
+                # ===============================
                 i = 0
-                while i < len(parts):
+                prev_output = None
+                while i<len(parts):
                     args =parts[i]
                     is_builtin = args[0] in SHELL_builtin
                     is_last =(i== len(parts)-1)
                     
+                    # builtin at end: external | builtin
                     if is_builtin:
                         if is_last:
                             run_builtin(args)
                             break
-                        else:
-                            #Builtin | external
-                            output = capture_builtin_output(args)
-                            next_args = parts[i+1]
-                            #start the process
+                        
+                        #Builtin | external
+                        if is_builtin:
+                            prev_output = capture_builtin_output(args)
+                            i+=1
+                            continue
+                        
+                        # external command
+                        if prev_output is not None:
                             p = subprocess.Popen(
                                 args,
                                 stdin = stdin,
-                                stdout = stdout,
+                                stdout = subprocess.PIPE if not is_last else sys.stdout,
                                 stderr = sys.stderr
                             )
-                            p.communicate(output.encode())
-                            break
+                            prev_output,_ = p.communicate(prev_output.encode())
+                        else:
+                            p = subprocess.Popen(
+                                args,
+                                stdout = subprocess.PIPE if not is_last else sys.stdout,
+                                stderr = sys.stderr
+                            )
+                            prev_output = p.stdout.read().decode() if not is_last else None
                     
-                    #external
-                    stdin = prev_pipe if prev_pipe is not None else None
-                    stdout = sys.stdout if is_last else subprocess.PIPE
-                    
-                    p = subprocess.Popen(
-                        args,
-                        stdin = stdin,
-                        stdout = stdout,
-                        stderr = sys.stderr
-                    )
-                    #close previous pipe in parent
-                    if prev_pipe is not None:
-                        prev_pipe.close()
+                        i+=1
+                    continue
                 
-                    #save pipe for next command    
-                    Prev_pipe = p.stdout if stdout == subprocess.PIPE else None
-                    processes.append(p)
-                    i+=1
-                
-                    #wait for all processes
-                for p in processes:
-                    p.wait()
-                continue
-            
             global last_text, tab_count
             last_text = None
             tab_count = 0
