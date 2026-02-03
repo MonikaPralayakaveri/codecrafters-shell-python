@@ -201,7 +201,8 @@ def main():
                         #Builtin | external
                         if is_builtin:
                             prev_output = capture_builtin_output(args)
-                        
+                            i+=1
+                            continue
                         # external command
                         if prev_output is not None:
                             p = subprocess.Popen(
@@ -214,10 +215,10 @@ def main():
                         else:
                             p = subprocess.Popen(
                                 args,
-                                stdout = subprocess.PIPE if not is_last else sys.stdout,
+                                stdout = stdout if is_last else subprocess.PIPE,
                                 stderr = sys.stderr
                             )
-                            prev_output = p.stdout.read().decode() if not is_last else None
+                            prev_output = None
                     
                         i+=1
                     continue
