@@ -7,7 +7,7 @@ import shlex
 import readline
 import contextlib
 
-SHELL_builtin = ["exit", "echo","type", "pwd", "cd"]
+SHELL_builtin = ["exit", "echo","type", "pwd", "cd", "history"]
 last_text = None
 tab_count = 0
 def get_executables_from_path():
@@ -106,7 +106,7 @@ def capture_builtin_output(cmd_parts):
         if cmd_parts[0] == "echo":  
             print(" ".join(cmd_parts[1:]))         
         elif cmd_parts[0] == "type":
-            builtin = ["exit", "echo","type", "pwd", "cd"]
+            builtin = ["exit", "echo","type", "pwd", "cd", "history"]
             if cmd_parts[1] in builtin:
                 print(cmd_parts[1]+ " is a shell builtin")
             elif shutil.which(cmd_parts[1]):
@@ -122,7 +122,7 @@ def run_builtin(cmd_parts):
         print(" ".join(cmd_parts[1:]))
 
     elif cmd_parts[0] == "type":
-        builtin = ["exit", "echo", "type", "pwd", "cd"]
+        builtin = ["exit", "echo", "type", "pwd", "cd","history"]
         if cmd_parts[1] in builtin:
             print(f"{cmd_parts[1]} is a shell builtin")
         elif shutil.which(cmd_parts[1]):
@@ -288,7 +288,7 @@ def main():
                     os.chdir(os.path.expanduser("~"))
                     
             elif str_split[0] == "type":
-                builtin = ["exit", "echo","type","pwd","cd"]
+                builtin = ["exit", "echo","type","pwd","cd", "history"]
                 if str_split[1] in builtin:
                     print(str_split[1]+" is a shell builtin")
                 elif shutil.which(str_split[1]):
