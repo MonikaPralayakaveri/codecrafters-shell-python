@@ -288,12 +288,8 @@ def main():
                 if len(str_split) >1 and str_split[1].isdigit():
                     n = int(str_split[1])
                     start = max(0, len(History) - n)
-                    items = History[start:]
-                else:
-                    start = 0
-                    items = History
                 for i in range(start, len(History)):
-                    print(f"{i+1:>5} {History[i]}")
+                    print(f"{i+1:>5}  {History[i]}")
                     
                 continue
                     
