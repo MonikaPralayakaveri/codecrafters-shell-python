@@ -290,9 +290,14 @@ def main():
                     start = max(0, len(History) - n)
                     items = History[start:]
                 else:
+                    start = 0
                     items = History
+                for i in range(start, len(History)):
+                    print(f"{i+1:>5} {History[i]}")
+                    
                 for i, cmd in enumerate(History, start =1):
                     print(f"{i:>5} {cmd}")
+                    
             #for cd
             elif str_split[0] == "cd":
                 # NAVIGATION
