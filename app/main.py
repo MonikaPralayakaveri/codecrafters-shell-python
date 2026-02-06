@@ -295,8 +295,7 @@ def main():
                 for i in range(start, len(History)):
                     print(f"{i+1:>5} {History[i]}")
                     
-                for i, cmd in enumerate(History, start =1):
-                    print(f"{i:>5} {cmd}")
+                continue
                     
             #for cd
             elif str_split[0] == "cd":
