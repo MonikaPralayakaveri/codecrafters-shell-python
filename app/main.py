@@ -108,7 +108,7 @@ def capture_builtin_output(cmd_parts):
             print(" ".join(cmd_parts[1:]))
         
         elif cmd_parts[0] == "history":
-            for i, cmd in enumerate(History, start =1):
+            for i, cmd in enumerate(History[:-1], start =1):
                 print(f"{i:>5} {cmd}")
                
         elif cmd_parts[0] == "type":
@@ -128,7 +128,7 @@ def run_builtin(cmd_parts):
         print(" ".join(cmd_parts[1:]))
         
     elif cmd_parts[0] == "history":
-        for i, cmd in enumerate(History, start =1):
+        for i, cmd in enumerate(History[:-1], start =1):
             print(f"{i:>5} {cmd}")
 
     elif cmd_parts[0] == "type":
@@ -282,6 +282,10 @@ def main():
             elif str_split[0] == "pwd":
                 # Navigation: Finding where we are
                 print(os.getcwd(), file=f_out)
+            
+            elif str_split[0] == "history":
+                for i, cmd in enumerate(History[:-1], start =1):
+                    print(f"{i:>5} {cmd}")
             #for cd
             elif str_split[0] == "cd":
                 # NAVIGATION
@@ -307,6 +311,7 @@ def main():
                     print(str_split[1]+ " is "+path)
                 else:
                     print(str_split[1]+": "+"not found")
+            
             
             else:
                 # EXTERNAL COMMANDS & REDIRECTION
