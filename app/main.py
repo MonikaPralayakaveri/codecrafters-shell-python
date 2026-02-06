@@ -284,6 +284,12 @@ def main():
                 print(os.getcwd(), file=f_out)
             
             elif str_split[0] == "history":
+                #history with number
+                if len(str_split) >1 and str_split[1].isdigit():
+                    n = int(str_split[1])
+                    items = History[-n:]
+                else:
+                    items = History
                 for i, cmd in enumerate(History, start =1):
                     print(f"{i:>5} {cmd}")
             #for cd
