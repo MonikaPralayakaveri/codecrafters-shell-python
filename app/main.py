@@ -287,7 +287,8 @@ def main():
                 #history with number
                 if len(str_split) >1 and str_split[1].isdigit():
                     n = int(str_split[1])
-                    items = History[-n:]
+                    start = max(0, len(History) - n)
+                    items = History[start:]
                 else:
                     items = History
                 for i, cmd in enumerate(History, start =1):
