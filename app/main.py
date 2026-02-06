@@ -7,6 +7,7 @@ import shlex
 import readline
 import contextlib
 
+History = []
 SHELL_builtin = ["exit", "echo","type", "pwd", "cd", "history"]
 last_text = None
 tab_count = 0
@@ -104,7 +105,12 @@ def capture_builtin_output(cmd_parts):
     
     with contextlib.redirect_stdout(buffer):
         if cmd_parts[0] == "echo":  
-            print(" ".join(cmd_parts[1:]))         
+            print(" ".join(cmd_parts[1:]))
+        
+        elif cmd_parts[0] == "history":
+            for i, cmd in enumerate(History, start =1):
+                print(f"{i:>5} {cmd}")
+               
         elif cmd_parts[0] == "type":
             builtin = ["exit", "echo","type", "pwd", "cd", "history"]
             if cmd_parts[1] in builtin:
@@ -120,6 +126,10 @@ def capture_builtin_output(cmd_parts):
 def run_builtin(cmd_parts):
     if cmd_parts[0] == "echo":
         print(" ".join(cmd_parts[1:]))
+        
+    elif cmd_parts[0] == "history":
+        for i, cmd in enumerate(History, start =1):
+            print(f"{i:>5} {cmd}")
 
     elif cmd_parts[0] == "type":
         builtin = ["exit", "echo", "type", "pwd", "cd","history"]
@@ -147,6 +157,7 @@ def main():
     while True: 
         try:
             command = input("$ ")
+            History.append(command)
             # Reset tab state whenever a new command starts
 
             if "|" in command:
