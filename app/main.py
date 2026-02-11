@@ -284,14 +284,24 @@ def main():
                 print(os.getcwd(), file=f_out)
             
             elif str_split[0] == "history":
+                #history -r <file> (READ FROM FILE)
+                if len(str_split) > 2 and str_split[1] == "-r":
+                    file_path = str_split[2]
+                    
+                    try:
+                        with open(file_path, "r") as f:
+                            for line in f:
+                                cmd = line.strip()
+                                if cmd: #ignore empty lines
+                                    History.append(cmd)
+                                    readline.add_history(cmd)
+                    except FileExistsError:
+                        pass
+                    continue
                 #history with number
-                if len(str_split) >1 and str_split[1].isdigit():
-                    n = int(str_split[1])
-                    start = max(0, len(History) - n)
-                    items = History[start:]
-                else:
-                    start = 0
-                    items = History
+                n = int(str_split[1]) if len(str_split) >1 and str_split[1].isdigit():
+                start = max(0, len(History) - n)
+                
                 for i in range(start, len(History)):
                     print(f"{i+1:>5}  {History[i]}")
                     
