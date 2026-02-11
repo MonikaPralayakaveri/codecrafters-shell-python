@@ -299,7 +299,7 @@ def main():
                         pass
                     continue
                 #history with number
-                n = int(str_split[1]) if len(str_split) >1 and str_split[1].isdigit():
+                n = int(str_split[1]) if len(str_split) >1 and str_split[1].isdigit() else len(History)
                 start = max(0, len(History) - n)
                 
                 for i in range(start, len(History)):
