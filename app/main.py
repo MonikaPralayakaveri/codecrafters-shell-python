@@ -156,9 +156,10 @@ def main():
     
     while True: 
         try:
-            command = input("$ ")
+            command = input("$ ") # Reset tab state whenever a new command starts
             History.append(command)
-            # Reset tab state whenever a new command starts
+            readline.add_history(command)
+            
 
             if "|" in command:
                 parts = [shlex.split(p.strip()) for p in command.split("|")]
