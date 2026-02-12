@@ -284,6 +284,18 @@ def main():
                 print(os.getcwd(), file=f_out)
             
             elif str_split[0] == "history":
+                #history -w <file> WRITE FILE 
+                if len(str_split) > 2 and str_split[1] == "-r":
+                    file_path = str_split[2]
+                    
+                    try:
+                        with open(file_path, "w") as f:
+                            for cmd in History:
+                                f.write(cmd + "\n")
+                            f.write("\n") #trailing empty line required
+                    except FileExistsError:
+                        pass
+                    continue
                 #history -r <file> (READ FROM FILE)
                 if len(str_split) > 2 and str_split[1] == "-r":
                     file_path = str_split[2]
