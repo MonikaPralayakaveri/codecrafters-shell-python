@@ -293,7 +293,6 @@ def main():
                         with open(file_path, "w") as f:
                             for cmd in History:
                                 f.write(cmd + "\n")
-                            f.write("\n") #trailing empty line required
                     except FileExistsError:
                         pass
                     continue
