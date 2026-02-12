@@ -286,7 +286,7 @@ def main():
             
             elif str_split[0] == "history":
                 #history -w <file> WRITE FILE 
-                if len(str_split) > 2 and str_split[1] == "-r":
+                if len(str_split) > 2 and str_split[1] == "-w":
                     file_path = str_split[2]
                     
                     try:
