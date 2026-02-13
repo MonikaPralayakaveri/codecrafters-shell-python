@@ -377,15 +377,13 @@ def main():
                     subprocess.run(str_split, stdout=f_out, stderr = f_err)
                 else:
                     print(command_name+": "+"command not found", file = f_err)
-            
-            readline.add_history(command)
-            
+
             # CLEANUP 
             if f_out is not sys.stdout:
                     f_out.close() 
             if f_err is not sys.stderr:
                 f_err.close()
-            
+            readline.add_history(command)
         except (EOFError, KeyboardInterrupt):
             break
 
