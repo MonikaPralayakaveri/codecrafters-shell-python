@@ -165,6 +165,8 @@ def main():
             
             History.append(command)
             
+            readline.add_history(command)
+            
             if "|" in command:
                 parts = [shlex.split(p.strip()) for p in command.split("|")]
                 has_builtin = any(p[0] in SHELL_builtin for p in parts)
@@ -313,7 +315,7 @@ def main():
                         with open(file_path, "w") as f:
                             for cmd in History:
                                 f.write(cmd + "\n")
-                    except FileExistsError:
+                    except FileNotFoundError:
                         pass
                     continue
                 #history -r <file> (READ FROM FILE)
@@ -327,7 +329,7 @@ def main():
                                 if cmd: #ignore empty lines
                                     History.append(cmd)
                                     readline.add_history(cmd)
-                    except FileExistsError:
+                    except FileNotFoundError:
                         pass
                     continue
                 #history with number
@@ -383,7 +385,7 @@ def main():
                     f_out.close() 
             if f_err is not sys.stderr:
                 f_err.close()
-            readline.add_history(command)
+            
         except (EOFError, KeyboardInterrupt):
             break
 
