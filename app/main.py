@@ -328,7 +328,7 @@ def main():
                                 cmd = line.strip()
                                 if cmd: #ignore empty lines
                                     History.append(cmd)
-                                    readline.add_history(cmd)
+                                    
                     except FileNotFoundError:
                         pass
                     continue
