@@ -162,7 +162,7 @@ def main():
                 continue
             
             History.append(command)
-
+            readline.add_history(command)
             if "|" in command:
                 parts = [shlex.split(p.strip()) for p in command.split("|")]
                 has_builtin = any(p[0] in SHELL_builtin for p in parts)
@@ -287,6 +287,21 @@ def main():
                 print(os.getcwd(), file=f_out)
             
             elif str_split[0] == "history":
+                #history -a <file> APPEND
+                if len(str_split) > 2 and str_split[1] == "-a":
+                    file_path = str_split[2]
+                    
+                    global last_written_index
+                    
+                    try:
+                        with open(file_path, "a") as f:
+                            for cmd in History[last_written_index:]:
+                                f.write(cmd + "\n")
+                    except Exception:
+                        pass
+                    last_written_index = len(History)
+                    continue
+                
                 #history -w <file> WRITE FILE 
                 if len(str_split) > 2 and str_split[1] == "-w":
                     file_path = str_split[2]
