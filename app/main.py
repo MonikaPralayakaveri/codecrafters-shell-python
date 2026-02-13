@@ -8,6 +8,8 @@ import readline
 import contextlib
 
 History = []
+last_written_index = 0
+
 SHELL_builtin = ["exit", "echo","type", "pwd", "cd", "history"]
 last_text = None
 tab_count = 0
@@ -163,6 +165,7 @@ def main():
             
             History.append(command)
             readline.add_history(command)
+            
             if "|" in command:
                 parts = [shlex.split(p.strip()) for p in command.split("|")]
                 has_builtin = any(p[0] in SHELL_builtin for p in parts)
@@ -299,6 +302,7 @@ def main():
                                 f.write(cmd + "\n")
                     except Exception:
                         pass
+                    
                     last_written_index = len(History)
                     continue
                 
