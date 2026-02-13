@@ -164,7 +164,6 @@ def main():
                 continue
             
             History.append(command)
-            readline.add_history(command)
             
             if "|" in command:
                 parts = [shlex.split(p.strip()) for p in command.split("|")]
@@ -378,11 +377,15 @@ def main():
                     subprocess.run(str_split, stdout=f_out, stderr = f_err)
                 else:
                     print(command_name+": "+"command not found", file = f_err)
+            
+            readline.add_history(command)
+            
             # CLEANUP 
             if f_out is not sys.stdout:
                     f_out.close() 
             if f_err is not sys.stderr:
                 f_err.close()
+            
         except (EOFError, KeyboardInterrupt):
             break
 
