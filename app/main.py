@@ -298,6 +298,8 @@ def main():
                         with open(file_path, "a") as f:
                             for cmd in History[last_written_index:]:
                                 f.write(cmd + "\n")
+                            
+                            f.write("")
                     except Exception:
                         pass
                     
