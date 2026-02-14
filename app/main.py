@@ -125,6 +125,7 @@ def capture_builtin_output(cmd_parts):
             print(os.getcwd())
                 
     return buffer.getvalue()
+
 def run_builtin(cmd_parts):
     if cmd_parts[0] == "echo":
         print(" ".join(cmd_parts[1:]))
@@ -328,6 +329,7 @@ def main():
                                 cmd = line.strip()
                                 if cmd: #ignore empty lines
                                     History.append(cmd)
+                                    readline.add_history(cmd)
                                     
                     except FileNotFoundError:
                         pass
