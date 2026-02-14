@@ -164,6 +164,9 @@ def main():
             if not command.strip():
                 continue
             
+            History.append(command)
+            readline.add_history(command)
+            
             if "|" in command:
                 parts = [shlex.split(p.strip()) for p in command.split("|")]
                 has_builtin = any(p[0] in SHELL_builtin for p in parts)
@@ -385,9 +388,6 @@ def main():
                     f_out.close() 
             if f_err is not sys.stderr:
                 f_err.close()
-            
-            History.append(command)
-            readline.add_history(command)
         
         except (EOFError, KeyboardInterrupt):
             break
