@@ -168,12 +168,10 @@ def main():
     global last_written_index
     while True: 
         try:
-            sys.stdout.write("$ ")# force prompt to print whenever a new command starts
-            sys.stdout.flush()
             try:
                 #capture history length Before input
                 pre_len = readline.get_current_history_length()
-                command = input()
+                command = input("$ ")
                 
                 #Capture history length After input
                 post_len = readline.get_current_history_length()
