@@ -167,6 +167,8 @@ def main():
             History.append(command)
             readline.add_history(command)
             
+            str_split = shlex.split(command)
+            
             if "|" in command:
                 parts = [shlex.split(p.strip()) for p in command.split("|")]
                 has_builtin = any(p[0] in SHELL_builtin for p in parts)
@@ -240,7 +242,7 @@ def main():
             if not command.strip():
                 continue
                    
-            str_split = shlex.split(command)
+    
             f_out = sys.stdout
             f_err = sys.stderr
             
