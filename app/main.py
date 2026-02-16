@@ -161,9 +161,10 @@ def main():
         try:
             sys.stdout.write("$ ")# force prompt to print whenever a new command starts
             sys.stdout.flush()
-            
-            command = input() 
-            
+            try:
+                command = input() 
+            except EOFError:
+                break
             if not command.strip():
                 continue
             
@@ -171,14 +172,15 @@ def main():
             History.append(command)
             
             try:
-                try:
-                    str_split = shlex.split(command)
-                except ValueError:
-                    print("Syntax error: checking for pipes blindly")
-                    str_split = command.split()
                 if "|" in command:
+                    try:
+                        str_split = shlex.split(command)
+                    except ValueError:
+                        print("Syntax error: checking for pipes blindly", file=sys.stderr)
+                        continue
+                    str_split = command.split()
                     parts = [shlex.split(p.strip()) for p in command.split("|")]
-                    has_builtin = any(p[0] in SHELL_builtin for p in parts)
+                    has_builtin = any(p[0] in SHELL_builtin for p in parts if p)
                     
                     # ===============================
                     # CASE 1: NO BUILTINS (pure external pipeline)
@@ -188,9 +190,17 @@ def main():
                         prev_pipe = None
                         processes = []
                         for i, args in enumerate(parts):
+                            if not args: continue #skip empty parts
                             stdin = prev_pipe
                             stdout = subprocess.PIPE if i<len(parts) - 1 else sys.stdout
                         
+                            #safe execution
+                            executable = shutil.which(args[0])
+                            if not executable:
+                                print(f"{args[0]}: command not found", file=sys.stderr)
+                                prev_pipe = None #break the chain data
+                                break
+                            
                             p = subprocess.Popen(
                                 args,
                                 stdin= stdin,
@@ -246,15 +256,24 @@ def main():
                 last_text = None
                 tab_count = 0
                 
-                if not command.strip():
+                try:
+                    str_split = shlex.split(command)
+                except ValueError:
+                    print(f"syntax error:{command}", file= sys.stderr)
                     continue
-                    
-        
+                
+                if not str_split:
+                    continue    
+                #redierection setup 
                 f_out = sys.stdout
                 f_err = sys.stderr
                 
-                if not str_split:
-                    continue
+                #check for redirection operators(simplifed safe check)
+                operator = None
+                is_error = False
+                mode = 'w'
+                
+                
                 if command == "exit":
                     break
                 
@@ -272,90 +291,37 @@ def main():
                 
                 # --- REDIRECTION PLUMBING ---
                 if operator:
-                    cmd_part, fileName_part = command.split(operator, 1)
-                    if not is_error_redir and cmd_part.strip().endswith("1"):
-                        cmd_part= cmd_part.strip()[:-1]
+                    try:
+                        cmd_part, fileName_part = command.split(operator, 1)
+                        if not is_error_redir and cmd_part.strip().endswith("1"):
+                            cmd_part= cmd_part.strip()[:-1]
+                            
+                        str_split = shlex.split(cmd_part)
+                        fileName = fileName_part.strip()
                         
-                    str_split = shlex.split(cmd_part)
-                    fileName = fileName_part.strip()
-                    
-                    os.makedirs(os.path.dirname(os.path.abspath(fileName)), exist_ok=True)
-                    f_file = open(fileName, mode)
-                    
-                    if is_error_redir:
-                        f_err = f_file
-                    else:
-                        f_out = f_file
+                        os.makedirs(os.path.dirname(os.path.abspath(fileName)), exist_ok=True)
+                        f_file = open(fileName, mode)
+                        
+                        if is_error_redir:
+                            f_err = f_file
+                        else:
+                            f_out = f_file
+                    except Exception as e:
+                        print(f"Redirection error: {e}", file=sys.stderr)
                     
                 else:
                     # If no operator, we use the original parsed command
                     str_split =shlex.split(command)
                 
-                if str_split[0] == "echo":
-                    print(" ".join(str_split[1:]), file = f_out)
+                if str_split[0] == "exit":
+                    sys.exit(0)
                     
+                elif str_split[0] == "echo":
+                    print(" ".join(str_split[1:]), file = f_out)
                     
                 elif str_split[0] == "pwd":
                     # Navigation: Finding where we are
                     print(os.getcwd(), file=f_out)
-                
-                elif str_split[0] == "history":
-                    
-                    global last_written_index
-                    
-                    #history -a <file> APPEND
-                    if len(str_split) > 2 and str_split[1] == "-a":
-                        file_path = str_split[2]
-                        
-                        try:
-                            with open(file_path, "a") as f:
-                                for cmd in History[last_written_index:]:
-                                    f.write(cmd + "\n")
-                                
-                                
-                        except Exception:
-                            pass
-                        
-                        last_written_index = len(History)
-                        continue
-                    
-                    #history -w <file> WRITE FILE 
-                    if len(str_split) > 2 and str_split[1] == "-w":
-                        file_path = str_split[2]
-                        
-                        try:
-                            with open(file_path, "w") as f:
-                                for cmd in History:
-                                    f.write(cmd + "\n")
-                        except FileNotFoundError:
-                            pass
-                        continue
-                    #history -r <file> (READ FROM FILE)
-                    if len(str_split) > 2 and str_split[1] == "-r":
-                        file_path = str_split[2]
-                        
-                        try:
-                            with open(file_path, "r") as f:
-                                for line in f:
-                                    cmd = line.strip()
-                                    if cmd: #ignore empty lines
-                                        History.append(cmd)
-                                        readline.add_history(cmd)
-                            
-                            last_written_index = len(History)
-                                        
-                        except FileNotFoundError:
-                            pass
-                        continue
-                    #history with number
-                    n = int(str_split[1]) if len(str_split) >1 and str_split[1].isdigit() else len(History)
-                    start = max(0, len(History) - n)
-                    
-                    for i in range(start, len(History)):
-                        print(f"{i+1:>5}  {History[i]}")
-                        
-                    continue
-                        
                 #for cd
                 elif str_split[0] == "cd":
                     # NAVIGATION
@@ -371,6 +337,59 @@ def main():
                     else:
                         # Default behavior: If user just types 'cd', move to the Home folder
                         os.chdir(os.path.expanduser("~"))
+                
+                elif str_split[0] == "history":
+                    
+                    global last_written_index
+                    
+                    #history -a <file> APPEND
+                    if len(str_split) > 2 and str_split[1] == "-a":
+                        file_path = str_split[2]
+                        
+                        try:
+                            with open(file_path, "a") as f:
+                                for cmd in History[last_written_index:]:
+                                    f.write(cmd + "\n")
+                            last_written_index = len(History)
+                        except Exception:
+                            pass
+                    
+                    #history -w <file> WRITE FILE 
+                    elif len(str_split) > 2 and str_split[1] == "-w":
+                        file_path = str_split[2]
+                        
+                        try:
+                            with open(file_path, "w") as f:
+                                for w_cmd in History:
+                                    f.write(w_cmd + "\n")
+                        except FileNotFoundError:
+                            pass
+                        continue
+                    #history -r <file> (READ FROM FILE)
+                    elif len(str_split) > 2 and str_split[1] == "-r":
+                        file_path = str_split[2]
+                        
+                        try:
+                            with open(file_path, "r") as f:
+                                for line in f:
+                                    r_cmd = line.strip()
+                                    if r_cmd: #ignore empty lines
+                                        History.append(cmd)
+                                        readline.add_history(cmd)
+                            
+                            last_written_index = len(History)
+                        except FileNotFoundError:
+                            pass
+                    else:
+                        #history with number
+                        n = int(str_split[1]) if len(str_split) >1 and str_split[1].isdigit() else len(History)
+                        start = max(0, len(History) - n)
+                        
+                        for i in range(start, len(History)):
+                            print(f"{i+1:>5}  {History[i]}", file = f_out)
+                            
+                        continue
+                        
                         
                 elif str_split[0] == "type":
                     builtin = ["exit", "echo","type","pwd","cd", "history"]
@@ -400,8 +419,10 @@ def main():
                     if f_err is not sys.stderr: f_err.close()
             except Exception as e:
                 print(f"Error: {e}", file=sys.stderr)
-        except (EOFError, KeyboardInterrupt):
-            break
+                
+        except KeyboardInterrupt:
+            print()
+            continue
 
 
 
