@@ -164,8 +164,9 @@ def main():
             if not command.strip():
                 continue
             
-            History.append(command)
             readline.add_history(command)
+            History.append(command)
+            
             
             str_split = shlex.split(command)
             
