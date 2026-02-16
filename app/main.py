@@ -395,7 +395,7 @@ def main():
                     if exe:
                         subprocess.run(str_split, stdout= f_out, stderr = f_err)
                     else:
-                        print(f:"{cmd}: command not found", file = f_err)
+                        print(f"{cmd}: command not found", file = f_err)
         
                 # CLEANUP
                     if f_out is not sys.stdout: f_out.close() 
