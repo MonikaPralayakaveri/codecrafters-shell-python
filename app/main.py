@@ -164,8 +164,7 @@ def main():
             if not command.strip():
                 continue
             
-            readline.add_history(command)
-            History.append(command)
+            
             
             
             str_split = shlex.split(command)
@@ -394,7 +393,10 @@ def main():
                     f_out.close() 
             if f_err is not sys.stderr:
                 f_err.close()
-        
+            
+            readline.add_history(command)
+            History.append(command)
+            
         except (EOFError, KeyboardInterrupt):
             break
 
