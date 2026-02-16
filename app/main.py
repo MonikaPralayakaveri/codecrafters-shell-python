@@ -11,8 +11,7 @@ History = []
 last_written_index = 0
 
 SHELL_builtin = ["exit", "echo","type", "pwd", "cd", "history"]
-last_text = None
-tab_count = 0
+
 def get_executables_from_path():
     executables = set()
     
@@ -102,6 +101,7 @@ def auto_completion(text, state):
 def capture_builtin_output(cmd_parts):
     """
     Runs a builtin command and captures its stdout as a string.
+    Used for the LEFT side of a pipe (eg., 'echo hi |..')
     """
     buffer = io.StringIO()
     
@@ -114,19 +114,26 @@ def capture_builtin_output(cmd_parts):
                 print(f"{i:>5} {cmd}")
                
         elif cmd_parts[0] == "type":
+            #fix: added length check to prevent crash
+            
             builtin = ["exit", "echo","type", "pwd", "cd", "history"]
-            if cmd_parts[1] in builtin:
-                print(cmd_parts[1]+ " is a shell builtin")
-            elif shutil.which(cmd_parts[1]):
-                print(cmd_parts[1]+ " is " + shutil.which(cmd_parts[1]))
-            else:
-                print(cmd_parts[1] + " not found")
+            if len(cmd_parts)>1:
+                if cmd_parts[1] in builtin:
+                    print(cmd_parts[1]+ " is a shell builtin")
+                elif shutil.which(cmd_parts[1]):
+                    print(cmd_parts[1]+ " is " + shutil.which(cmd_parts[1]))
+                else:
+                    print(cmd_parts[1] + " not found")
+                    
         elif cmd_parts[0] == "pwd":
             print(os.getcwd())
                 
     return buffer.getvalue()
 
 def run_builtin(cmd_parts):
+    """
+    Used For the RIGHT/LAST side of a pipe.
+    """
     if cmd_parts[0] == "echo":
         print(" ".join(cmd_parts[1:]))
         
@@ -135,13 +142,15 @@ def run_builtin(cmd_parts):
             print(f"{i:>5} {cmd}")
 
     elif cmd_parts[0] == "type":
-        builtin = ["exit", "echo", "type", "pwd", "cd","history"]
-        if cmd_parts[1] in builtin:
-            print(f"{cmd_parts[1]} is a shell builtin")
-        elif shutil.which(cmd_parts[1]):
-            print(f"{cmd_parts[1]} is {shutil.which(cmd_parts[1])}")
-        else:
-            print(f"{cmd_parts[1]} not found")
+        
+        if len(cmd_parts)>1:
+            builtin = ["exit", "echo", "type", "pwd", "cd","history"]
+            if cmd_parts[1] in builtin:
+                print(f"{cmd_parts[1]} is a shell builtin")
+            elif shutil.which(cmd_parts[1]):
+                print(f"{cmd_parts[1]} is {shutil.which(cmd_parts[1])}")
+            else:
+                print(f"{cmd_parts[1]} not found")
 
     elif cmd_parts[0] == "pwd":
         print(os.getcwd())   
@@ -156,7 +165,7 @@ def main():
         readline.parse_and_bind("tab: complete")
     
     # TODO: Uncomment the code below to pass the first stage
-    
+    global last_written_index
     while True: 
         try:
             sys.stdout.write("$ ")# force prompt to print whenever a new command starts
