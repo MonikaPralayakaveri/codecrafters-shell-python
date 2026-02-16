@@ -157,32 +157,26 @@ def run_builtin(cmd_parts):
         
 def handle_pipeline(command):
     try:
-        #1. parse all segments of the pipe
+        # 1. Parse all segments of the pipe
         parts_raw = command.split("|")
         parts = []
         for p in parts_raw:
             cleaned = shlex.split(p.strip())
             if cleaned:
                 parts.append(cleaned)
+        
         if not parts:
             return
-        
-        #2.check for builtins
-        #Ensure we are checking against the global list SHELL_builtin
-        
+
+        # 2. Check for builtins
+        # Ensure we are checking against the global list SHELL_builtin
         has_builtin = False
         for p in parts:
-            for p in parts:
-                if p[0] in SHELL_builtin:
-                    has_builtin = True
-                    break
-        #3.Case 1: Pure External Pipeline (cat | head | wc)
-        if not has_builtin:
-            prev_pipe = None
-            processes = []
-            
-            for i, args in enumerate(parts):
-                # 3. Case 1: Pure External Pipeline (cat | head | wc)
+            if p[0] in SHELL_builtin:
+                has_builtin = True
+                break
+        
+        # 3. Case 1: Pure External Pipeline (cat | head | wc)
         if not has_builtin:
             prev_pipe = None
             processes = []
@@ -258,7 +252,7 @@ def handle_pipeline(command):
 
     except Exception as e:
         print(f"Pipeline Error: {e}", file=sys.stderr)
-                  
+                    
         
 # mail shell loop
 def main():
