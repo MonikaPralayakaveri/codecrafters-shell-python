@@ -308,39 +308,29 @@ def main():
                             f_out = f_file
                     except Exception as e:
                         print(f"Redirection error: {e}", file=sys.stderr)
-                    
-                else:
-                    # If no operator, we use the original parsed command
-                    str_split =shlex.split(command)
-                
-                if str_split[0] == "exit":
+        
+                cmd = str_split[0]
+                if cmd == "exit":
                     sys.exit(0)
                     
-                elif str_split[0] == "echo":
+                elif cmd == "echo":
                     print(" ".join(str_split[1:]), file = f_out)
                     
-                elif str_split[0] == "pwd":
+                elif cmd == "pwd":
                     # Navigation: Finding where we are
                     print(os.getcwd(), file=f_out)
                 #for cd
-                elif str_split[0] == "cd":
-                    # NAVIGATION
-                    if len(str_split) >1:
-                        cdpath = str_split[1]
-                        # Convert shortcuts like '~' into the full home directory path
-                        cdpath = os.path.expanduser(cdpath)
-                        try:
-                            # Tell the Kernel to move this process's 'marker' to the new location
-                            os.chdir(cdpath)
-                        except FileNotFoundError:
-                            print(f"cd: {cdpath}: No such file or directory")
-                    else:
-                        # Default behavior: If user just types 'cd', move to the Home folder
-                        os.chdir(os.path.expanduser("~"))
+                elif cmd == "cd":
+
+                    path = str_split[1] if len(str_split)>1 else "~"
+                    #handle shortcuts
+                    path = os.path.expanduser(path)
+                    try:
+                        os.chdir(path)
+                    except FileNotFoundError:
+                        print(f"cd: {path}: No such file or directory", file = f_err)
                 
-                elif str_split[0] == "history":
-                    
-                    global last_written_index
+                elif cmd == "history":
                     
                     #history -a <file> APPEND
                     if len(str_split) > 2 and str_split[1] == "-a":
@@ -348,11 +338,10 @@ def main():
                         
                         try:
                             with open(file_path, "a") as f:
-                                for cmd in History[last_written_index:]:
-                                    f.write(cmd + "\n")
+                                for h_cmd in History[last_written_index:]:
+                                    f.write(h_cmd + "\n")
                             last_written_index = len(History)
-                        except Exception:
-                            pass
+                        except Exception: pass
                     
                     #history -w <file> WRITE FILE 
                     elif len(str_split) > 2 and str_split[1] == "-w":
@@ -360,11 +349,10 @@ def main():
                         
                         try:
                             with open(file_path, "w") as f:
-                                for w_cmd in History:
-                                    f.write(w_cmd + "\n")
-                        except FileNotFoundError:
-                            pass
-                        continue
+                                for h_cmd in History:
+                                    f.write(h_cmd + "\n")
+                        except FileNotFoundError: pass
+                        
                     #history -r <file> (READ FROM FILE)
                     elif len(str_split) > 2 and str_split[1] == "-r":
                         file_path = str_split[2]
@@ -372,14 +360,14 @@ def main():
                         try:
                             with open(file_path, "r") as f:
                                 for line in f:
-                                    r_cmd = line.strip()
-                                    if r_cmd: #ignore empty lines
-                                        History.append(cmd)
-                                        readline.add_history(cmd)
+                                    h_cmd = line.strip()
+                                    if h_cmd: #ignore empty lines
+                                        History.append(h_cmd)
+                                        readline.add_history(h_cmd)
                             
                             last_written_index = len(History)
-                        except FileNotFoundError:
-                            pass
+                        except FileNotFoundError:pass
+                    
                     else:
                         #history with number
                         n = int(str_split[1]) if len(str_split) >1 and str_split[1].isdigit() else len(History)
@@ -388,31 +376,26 @@ def main():
                         for i in range(start, len(History)):
                             print(f"{i+1:>5}  {History[i]}", file = f_out)
                             
-                        continue
-                        
-                        
-                elif str_split[0] == "type":
-                    builtin = ["exit", "echo","type","pwd","cd", "history"]
-                    if str_split[1] in builtin:
-                        print(str_split[1]+" is a shell builtin")
-                    elif shutil.which(str_split[1]):
-                        path = shutil.which(str_split[1])
+                elif cmd == "type":
+                    if len(str_split) >1:
+                        target =str_split[1]
+                        builtin = ["exit", "echo","type","pwd","cd", "history"]
+                    if target in builtin:
+                        print(f"{target}+ is a shell builtin", file = f_out)
+                    elif shutil.which(target):
+                        print(f"{target}+ is {shutil.which(target)}", file = f_out)
                         print(str_split[1]+ " is "+path)
                     else:
-                        print(str_split[1]+": "+"not found")
+                        print(f"{target}: not found", file =f_out)
                 
                 
                 else:
                     # EXTERNAL COMMANDS & REDIRECTION
-                    # grab the command name(eg., 'ls') and search the sys PATH for its file Location.
-                    command_name = str_split[0]
-                    path = shutil.which(command_name) #This looks in /usr/bin, /bin, etc.
-                    args = str_split[1:] #collect everything after command name
-                    if path:
-                        #in "child process" we pass the short name in list, full path -> executable
-                        subprocess.run(str_split, stdout=f_out, stderr = f_err)
+                    exe =shutil.which(cmd)
+                    if exe:
+                        subprocess.run(str_split, stdout= f_out, stderr = f_err)
                     else:
-                        print(command_name+": "+"command not found", file = f_err)
+                        print(f:"{cmd}: command not found", file = f_err)
         
                 # CLEANUP
                     if f_out is not sys.stdout: f_out.close() 
