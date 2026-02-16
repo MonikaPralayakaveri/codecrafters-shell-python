@@ -402,7 +402,7 @@ def main():
                         target =str_split[1]
                         builtin = ["exit", "echo","type","pwd","cd", "history"]
                     if target in builtin:
-                        print(f"{target}+ is a shell builtin", file = f_out)
+                        print(f"{target} is a shell builtin", file = f_out)
                     elif shutil.which(target):
                         print(f"{target}+ is {shutil.which(target)}", file = f_out)
                         print(str_split[1]+ " is "+path)
