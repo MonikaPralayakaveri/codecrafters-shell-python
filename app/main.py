@@ -169,7 +169,6 @@ def handle_pipeline(command):
             return
 
         # 2. Check for builtins
-        # Ensure we are checking against the global list SHELL_builtin
         has_builtin = False
         for p in parts:
             if p[0] in SHELL_builtin:
@@ -182,35 +181,28 @@ def handle_pipeline(command):
             processes = []
             
             for i, args in enumerate(parts):
-                # Input comes from previous pipe (or None for first command)
                 stdin = prev_pipe
-                # Output goes to next pipe (or stdout for last command)
                 stdout = subprocess.PIPE if i < len(parts) - 1 else sys.stdout
                 
-                # Check executable exists
                 if not shutil.which(args[0]):
                     print(f"{args[0]}: command not found", file=sys.stderr)
-                    # Stop the pipeline if a command is missing
                     return 
 
                 p = subprocess.Popen(args, stdin=stdin, stdout=stdout, stderr=sys.stderr)
                 
-                # Close the write-end of the previous pipe (important!)
                 if prev_pipe:
                     prev_pipe.close()
                 
-                # Save read-end for the next command
                 prev_pipe = p.stdout
                 processes.append(p)
             
-            # Wait for all processes to finish
             for p in processes:
                 p.wait()
             return
 
         # 4. Case 2: Mixed Pipeline (Builtins + External)
         i = 0
-        prev_output = None # This stores the output string between steps
+        prev_output = None 
         
         while i < len(parts):
             args = parts[i]
@@ -218,34 +210,33 @@ def handle_pipeline(command):
             is_last_cmd = (i == len(parts) - 1)
             is_builtin_cmd = cmd_name in SHELL_builtin
             
-            # Sub-case: Builtin at the very end (e.g., ... | echo)
-            if is_builtin_cmd and prev_output is None and is_last_cmd:
+            # --- FIX IS HERE ---
+            # If it's the last command and it's a builtin, just run it!
+            # We don't care if 'prev_output' exists because 'type', 'echo', etc. ignore stdin.
+            if is_builtin_cmd and is_last_cmd:
                 run_builtin(args)
                 break
+            # -------------------
             
-            # Sub-case: Builtin in the middle (e.g., echo ... | cat)
+            # Sub-case: Builtin in the middle (capture output for next stage)
             if is_builtin_cmd:
                 prev_output = capture_builtin_output(args)
                 i += 1
                 continue
             
             # Sub-case: External command
-            # If we have input from a previous builtin, we pass it via communicate()
             p = subprocess.Popen(
                 args,
-                stdin=subprocess.PIPE, # Always pipe stdin to handle prev_output
+                stdin=subprocess.PIPE, 
                 stdout=subprocess.PIPE if not is_last_cmd else sys.stdout,
                 stderr=sys.stderr
             )
             
             input_bytes = prev_output.encode() if prev_output else None
             
-            # Run the command
-            # communicate() handles writing to stdin and closing it
             out_data, _ = p.communicate(input=input_bytes)
             
             if not is_last_cmd:
-                # Capture output for the next loop iteration
                 prev_output = out_data.decode() if out_data else ""
             
             i += 1
@@ -335,6 +326,7 @@ def main():
                     print(" ".join(str_split[1:]), file=f_out)
                 elif cmd == "pwd":
                     print(os.getcwd(), file=f_out)
+                
                 elif cmd == "cd":
                     path = str_split[1] if len(str_split) > 1 else "~"
                     path = os.path.expanduser(path)
@@ -342,6 +334,7 @@ def main():
                         os.chdir(path)
                     except FileNotFoundError:
                         print(f"cd: {path}: No such file or directory", file=f_err)
+                
                 elif cmd == "history":
                     if len(str_split) > 2 and str_split[1] == "-a":
                         file_path = os.path.expanduser(str_split[2])
@@ -351,6 +344,7 @@ def main():
                                     f.write(h_cmd + "\n")
                             last_written_index = len(History)
                         except Exception: pass
+                    
                     elif len(str_split) > 2 and str_split[1] == "-w":
                         file_path = os.path.expanduser(str_split[2])
                         try:
@@ -359,6 +353,7 @@ def main():
                                     f.write(h_cmd + "\n")
                             last_written_index = len(History)
                         except Exception: pass
+                    
                     elif len(str_split) > 2 and str_split[1] == "-r":
                         file_path = os.path.expanduser(str_split[2])
                         try:
@@ -370,11 +365,13 @@ def main():
                                         readline.add_history(h_cmd)
                             last_written_index = len(History)
                         except FileNotFoundError: pass
+                    
                     else:
                         n = int(str_split[1]) if len(str_split) > 1 and str_split[1].isdigit() else len(History)
                         start = max(0, len(History) - n)
                         for i in range(start, len(History)):
                             print(f"{i+1:>5}  {History[i]}", file=f_out)
+                
                 elif cmd == "type":
                     if len(str_split) > 1:
                         target = str_split[1]
@@ -384,6 +381,7 @@ def main():
                             print(f"{target} is {shutil.which(target)}", file=f_out)
                         else:
                             print(f"{target}: not found", file=f_out)
+                
                 else:
                     exe = shutil.which(cmd)
                     if exe:
