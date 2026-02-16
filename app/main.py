@@ -159,244 +159,247 @@ def main():
     
     while True: 
         try:
-            command = input("$ ") # Reset tab state whenever a new command starts
+            sys.stdout.write("$ ")# force prompt to print whenever a new command starts
+            sys.stdout.flush()
+            
+            command = input() 
             
             if not command.strip():
                 continue
-            
-            
-            
-            
-            str_split = shlex.split(command)
-            
-            if "|" in command:
-                parts = [shlex.split(p.strip()) for p in command.split("|")]
-                has_builtin = any(p[0] in SHELL_builtin for p in parts)
-                
-                # ===============================
-                # CASE 1: NO BUILTINS (pure external pipeline)
-                # ===============================
-                
-                if not has_builtin:
-                    prev_pipe = None
-                    processes = []
-                    for i, args in enumerate(parts):
-                        stdin = prev_pipe
-                        stdout = subprocess.PIPE if i<len(parts) - 1 else sys.stdout
-                    
-                        p = subprocess.Popen(
-                            args,
-                            stdin= stdin,
-                            stdout = stdout,
-                            stderr=sys.stderr
-                        )
-                    
-                        if prev_pipe is not None:
-                            prev_pipe.close()
-                        
-                        prev_pipe = p.stdout
-                        processes.append(p)
-                    
-                    for p in processes:
-                        p.wait()
-                    continue
-                
-                # ===============================
-                # CASE 2: PIPELINE WITH BUILTIN
-                # ===============================
-                i = 0
-                prev_output = None
-                
-                while i<len(parts):
-                    args =parts[i]
-                    is_builtin = args[0] in SHELL_builtin
-                    is_last =(i== len(parts)-1)
-                    
-                    if is_builtin and prev_output is None and is_last:
-                        run_builtin(args)
-                        break
-                    #Builtin | external
-                    if is_builtin:
-                        prev_output = capture_builtin_output(args)
-                        i+=1
-                        continue
-                    # external command
-                    p = subprocess.Popen(
-                        args,
-                        stdin = subprocess.PIPE,
-                        stdout = subprocess.PIPE if not is_last else sys.stdout,
-                        stderr = sys.stderr
-                    )
-                    
-                    if prev_output is not None:
-                        prev_output, _ = p.communicate(prev_output.encode())
-                    else:
-                        p.wait()
-                    i +=1
-                continue
-                
-            global last_text, tab_count
-            last_text = None
-            tab_count = 0
-            
-            if not command.strip():
-                continue
-                   
-    
-            f_out = sys.stdout
-            f_err = sys.stderr
-            
-            if not str_split:
-                continue
-            if command == "exit":
-                break
-            
-            # --- REDIRECTON DETECTION ---
-            if "2>>" in command:
-                operator, mode, is_error_redir ="2>>", "a", True
-            elif "2>" in command:
-                operator, mode, is_error_redir ="2>", "w", True   
-            elif ">>" in command:
-                operator, mode, is_error_redir =">>", "a", False
-            elif ">" in command:
-                operator, mode, is_error_redir =">", "w", False            
-            else:
-                operator = None
-            
-            # --- REDIRECTION PLUMBING ---
-            if operator:
-                cmd_part, fileName_part = command.split(operator, 1)
-                if not is_error_redir and cmd_part.strip().endswith("1"):
-                    cmd_part= cmd_part.strip()[:-1]
-                    
-                str_split = shlex.split(cmd_part)
-                fileName = fileName_part.strip()
-                
-                os.makedirs(os.path.dirname(os.path.abspath(fileName)), exist_ok=True)
-                f_file = open(fileName, mode)
-                
-                if is_error_redir:
-                    f_err = f_file
-                else:
-                    f_out = f_file
-                
-            else:
-                # If no operator, we use the original parsed command
-                str_split =shlex.split(command)
-            
-            if str_split[0] == "echo":
-                print(" ".join(str_split[1:]), file = f_out)
-                
-                
-            elif str_split[0] == "pwd":
-                # Navigation: Finding where we are
-                print(os.getcwd(), file=f_out)
-            
-            elif str_split[0] == "history":
-                
-                global last_written_index
-                
-                #history -a <file> APPEND
-                if len(str_split) > 2 and str_split[1] == "-a":
-                    file_path = str_split[2]
-                    
-                    try:
-                        with open(file_path, "a") as f:
-                            for cmd in History[last_written_index:]:
-                                f.write(cmd + "\n")
-                            
-                            
-                    except Exception:
-                        pass
-                    
-                    last_written_index = len(History)
-                    continue
-                
-                #history -w <file> WRITE FILE 
-                if len(str_split) > 2 and str_split[1] == "-w":
-                    file_path = str_split[2]
-                    
-                    try:
-                        with open(file_path, "w") as f:
-                            for cmd in History:
-                                f.write(cmd + "\n")
-                    except FileNotFoundError:
-                        pass
-                    continue
-                #history -r <file> (READ FROM FILE)
-                if len(str_split) > 2 and str_split[1] == "-r":
-                    file_path = str_split[2]
-                    
-                    try:
-                        with open(file_path, "r") as f:
-                            for line in f:
-                                cmd = line.strip()
-                                if cmd: #ignore empty lines
-                                    History.append(cmd)
-                                    readline.add_history(cmd)
-                        
-                        last_written_index = len(History)
-                                    
-                    except FileNotFoundError:
-                        pass
-                    continue
-                #history with number
-                n = int(str_split[1]) if len(str_split) >1 and str_split[1].isdigit() else len(History)
-                start = max(0, len(History) - n)
-                
-                for i in range(start, len(History)):
-                    print(f"{i+1:>5}  {History[i]}")
-                    
-                continue
-                    
-            #for cd
-            elif str_split[0] == "cd":
-                # NAVIGATION
-                if len(str_split) >1:
-                    cdpath = str_split[1]
-                    # Convert shortcuts like '~' into the full home directory path
-                    cdpath = os.path.expanduser(cdpath)
-                    try:
-                        # Tell the Kernel to move this process's 'marker' to the new location
-                        os.chdir(cdpath)
-                    except FileNotFoundError:
-                        print(f"cd: {cdpath}: No such file or directory")
-                else:
-                    # Default behavior: If user just types 'cd', move to the Home folder
-                    os.chdir(os.path.expanduser("~"))
-                    
-            elif str_split[0] == "type":
-                builtin = ["exit", "echo","type","pwd","cd", "history"]
-                if str_split[1] in builtin:
-                    print(str_split[1]+" is a shell builtin")
-                elif shutil.which(str_split[1]):
-                    path = shutil.which(str_split[1])
-                    print(str_split[1]+ " is "+path)
-                else:
-                    print(str_split[1]+": "+"not found")
-            
-            
-            else:
-                # EXTERNAL COMMANDS & REDIRECTION
-                # grab the command name(eg., 'ls') and search the sys PATH for its file Location.
-                command_name = str_split[0]
-                path = shutil.which(command_name) #This looks in /usr/bin, /bin, etc.
-                args = str_split[1:] #collect everything after command name
-                if path:
-                    #in "child process" we pass the short name in list, full path -> executable
-                    subprocess.run(str_split, stdout=f_out, stderr = f_err)
-                else:
-                    print(command_name+": "+"command not found", file = f_err)
-
-            # CLEANUP 
-            if f_out is not sys.stdout:
-                    f_out.close() 
-            if f_err is not sys.stderr:
-                f_err.close()
             
             readline.add_history(command)
             History.append(command)
             
+            try:
+                try:
+                    str_split = shlex.split(command)
+                except ValueError:
+                    print("Syntax error: checking for pipes blindly")
+                    str_split = command.split()
+                if "|" in command:
+                    parts = [shlex.split(p.strip()) for p in command.split("|")]
+                    has_builtin = any(p[0] in SHELL_builtin for p in parts)
+                    
+                    # ===============================
+                    # CASE 1: NO BUILTINS (pure external pipeline)
+                    # ===============================
+                    
+                    if not has_builtin:
+                        prev_pipe = None
+                        processes = []
+                        for i, args in enumerate(parts):
+                            stdin = prev_pipe
+                            stdout = subprocess.PIPE if i<len(parts) - 1 else sys.stdout
+                        
+                            p = subprocess.Popen(
+                                args,
+                                stdin= stdin,
+                                stdout = stdout,
+                                stderr=sys.stderr
+                            )
+                        
+                            if prev_pipe is not None:
+                                prev_pipe.close()
+                            
+                            prev_pipe = p.stdout
+                            processes.append(p)
+                        
+                        for p in processes:
+                            p.wait()
+                        continue
+                    
+                    # ===============================
+                    # CASE 2: PIPELINE WITH BUILTIN
+                    # ===============================
+                    i = 0
+                    prev_output = None
+                    
+                    while i<len(parts):
+                        args =parts[i]
+                        is_builtin = args[0] in SHELL_builtin
+                        is_last =(i== len(parts)-1)
+                        
+                        if is_builtin and prev_output is None and is_last:
+                            run_builtin(args)
+                            break
+                        #Builtin | external
+                        if is_builtin:
+                            prev_output = capture_builtin_output(args)
+                            i+=1
+                            continue
+                        # external command
+                        p = subprocess.Popen(
+                            args,
+                            stdin = subprocess.PIPE,
+                            stdout = subprocess.PIPE if not is_last else sys.stdout,
+                            stderr = sys.stderr
+                        )
+                        
+                        if prev_output is not None:
+                            prev_output, _ = p.communicate(prev_output.encode())
+                        else:
+                            p.wait()
+                        i +=1
+                    continue
+                    
+                global last_text, tab_count
+                last_text = None
+                tab_count = 0
+                
+                if not command.strip():
+                    continue
+                    
+        
+                f_out = sys.stdout
+                f_err = sys.stderr
+                
+                if not str_split:
+                    continue
+                if command == "exit":
+                    break
+                
+                # --- REDIRECTON DETECTION ---
+                if "2>>" in command:
+                    operator, mode, is_error_redir ="2>>", "a", True
+                elif "2>" in command:
+                    operator, mode, is_error_redir ="2>", "w", True   
+                elif ">>" in command:
+                    operator, mode, is_error_redir =">>", "a", False
+                elif ">" in command:
+                    operator, mode, is_error_redir =">", "w", False            
+                else:
+                    operator = None
+                
+                # --- REDIRECTION PLUMBING ---
+                if operator:
+                    cmd_part, fileName_part = command.split(operator, 1)
+                    if not is_error_redir and cmd_part.strip().endswith("1"):
+                        cmd_part= cmd_part.strip()[:-1]
+                        
+                    str_split = shlex.split(cmd_part)
+                    fileName = fileName_part.strip()
+                    
+                    os.makedirs(os.path.dirname(os.path.abspath(fileName)), exist_ok=True)
+                    f_file = open(fileName, mode)
+                    
+                    if is_error_redir:
+                        f_err = f_file
+                    else:
+                        f_out = f_file
+                    
+                else:
+                    # If no operator, we use the original parsed command
+                    str_split =shlex.split(command)
+                
+                if str_split[0] == "echo":
+                    print(" ".join(str_split[1:]), file = f_out)
+                    
+                    
+                elif str_split[0] == "pwd":
+                    # Navigation: Finding where we are
+                    print(os.getcwd(), file=f_out)
+                
+                elif str_split[0] == "history":
+                    
+                    global last_written_index
+                    
+                    #history -a <file> APPEND
+                    if len(str_split) > 2 and str_split[1] == "-a":
+                        file_path = str_split[2]
+                        
+                        try:
+                            with open(file_path, "a") as f:
+                                for cmd in History[last_written_index:]:
+                                    f.write(cmd + "\n")
+                                
+                                
+                        except Exception:
+                            pass
+                        
+                        last_written_index = len(History)
+                        continue
+                    
+                    #history -w <file> WRITE FILE 
+                    if len(str_split) > 2 and str_split[1] == "-w":
+                        file_path = str_split[2]
+                        
+                        try:
+                            with open(file_path, "w") as f:
+                                for cmd in History:
+                                    f.write(cmd + "\n")
+                        except FileNotFoundError:
+                            pass
+                        continue
+                    #history -r <file> (READ FROM FILE)
+                    if len(str_split) > 2 and str_split[1] == "-r":
+                        file_path = str_split[2]
+                        
+                        try:
+                            with open(file_path, "r") as f:
+                                for line in f:
+                                    cmd = line.strip()
+                                    if cmd: #ignore empty lines
+                                        History.append(cmd)
+                                        readline.add_history(cmd)
+                            
+                            last_written_index = len(History)
+                                        
+                        except FileNotFoundError:
+                            pass
+                        continue
+                    #history with number
+                    n = int(str_split[1]) if len(str_split) >1 and str_split[1].isdigit() else len(History)
+                    start = max(0, len(History) - n)
+                    
+                    for i in range(start, len(History)):
+                        print(f"{i+1:>5}  {History[i]}")
+                        
+                    continue
+                        
+                #for cd
+                elif str_split[0] == "cd":
+                    # NAVIGATION
+                    if len(str_split) >1:
+                        cdpath = str_split[1]
+                        # Convert shortcuts like '~' into the full home directory path
+                        cdpath = os.path.expanduser(cdpath)
+                        try:
+                            # Tell the Kernel to move this process's 'marker' to the new location
+                            os.chdir(cdpath)
+                        except FileNotFoundError:
+                            print(f"cd: {cdpath}: No such file or directory")
+                    else:
+                        # Default behavior: If user just types 'cd', move to the Home folder
+                        os.chdir(os.path.expanduser("~"))
+                        
+                elif str_split[0] == "type":
+                    builtin = ["exit", "echo","type","pwd","cd", "history"]
+                    if str_split[1] in builtin:
+                        print(str_split[1]+" is a shell builtin")
+                    elif shutil.which(str_split[1]):
+                        path = shutil.which(str_split[1])
+                        print(str_split[1]+ " is "+path)
+                    else:
+                        print(str_split[1]+": "+"not found")
+                
+                
+                else:
+                    # EXTERNAL COMMANDS & REDIRECTION
+                    # grab the command name(eg., 'ls') and search the sys PATH for its file Location.
+                    command_name = str_split[0]
+                    path = shutil.which(command_name) #This looks in /usr/bin, /bin, etc.
+                    args = str_split[1:] #collect everything after command name
+                    if path:
+                        #in "child process" we pass the short name in list, full path -> executable
+                        subprocess.run(str_split, stdout=f_out, stderr = f_err)
+                    else:
+                        print(command_name+": "+"command not found", file = f_err)
+        
+                # CLEANUP
+                    if f_out is not sys.stdout: f_out.close() 
+                    if f_err is not sys.stderr: f_err.close()
+            except Exception as e:
+                print(f"Error: {e}", file=sys.stderr)
         except (EOFError, KeyboardInterrupt):
             break
 
