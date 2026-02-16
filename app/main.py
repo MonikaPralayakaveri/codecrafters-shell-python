@@ -153,282 +153,260 @@ def run_builtin(cmd_parts):
                 print(f"{cmd_parts[1]} not found")
 
     elif cmd_parts[0] == "pwd":
-        print(os.getcwd())   
+        print(os.getcwd())
+        
+def handle_pipeline(command):
+    try:
+        #1. parse all segments of the pipe
+        parts_raw = command.split("|")
+        parts = []
+        for p in parts_raw:
+            cleaned = shlex.split(p.strip())
+            if cleaned:
+                parts.append(cleaned)
+        if not parts:
+            return
+        
+        #2.check for builtins
+        #Ensure we are checking against the global list SHELL_builtin
+        
+        has_builtin = False
+        for p in parts:
+            for p in parts:
+                if p[0] in SHELL_builtin:
+                    has_builtin = True
+                    break
+        #3.Case 1: Pure External Pipeline (cat | head | wc)
+        if not has_builtin:
+            prev_pipe = None
+            processes = []
+            
+            for i, args in enumerate(parts):
+                # 3. Case 1: Pure External Pipeline (cat | head | wc)
+        if not has_builtin:
+            prev_pipe = None
+            processes = []
+            
+            for i, args in enumerate(parts):
+                # Input comes from previous pipe (or None for first command)
+                stdin = prev_pipe
+                # Output goes to next pipe (or stdout for last command)
+                stdout = subprocess.PIPE if i < len(parts) - 1 else sys.stdout
+                
+                # Check executable exists
+                if not shutil.which(args[0]):
+                    print(f"{args[0]}: command not found", file=sys.stderr)
+                    # Stop the pipeline if a command is missing
+                    return 
+
+                p = subprocess.Popen(args, stdin=stdin, stdout=stdout, stderr=sys.stderr)
+                
+                # Close the write-end of the previous pipe (important!)
+                if prev_pipe:
+                    prev_pipe.close()
+                
+                # Save read-end for the next command
+                prev_pipe = p.stdout
+                processes.append(p)
+            
+            # Wait for all processes to finish
+            for p in processes:
+                p.wait()
+            return
+
+        # 4. Case 2: Mixed Pipeline (Builtins + External)
+        i = 0
+        prev_output = None # This stores the output string between steps
+        
+        while i < len(parts):
+            args = parts[i]
+            cmd_name = args[0]
+            is_last_cmd = (i == len(parts) - 1)
+            is_builtin_cmd = cmd_name in SHELL_builtin
+            
+            # Sub-case: Builtin at the very end (e.g., ... | echo)
+            if is_builtin_cmd and prev_output is None and is_last_cmd:
+                run_builtin(args)
+                break
+            
+            # Sub-case: Builtin in the middle (e.g., echo ... | cat)
+            if is_builtin_cmd:
+                prev_output = capture_builtin_output(args)
+                i += 1
+                continue
+            
+            # Sub-case: External command
+            # If we have input from a previous builtin, we pass it via communicate()
+            p = subprocess.Popen(
+                args,
+                stdin=subprocess.PIPE, # Always pipe stdin to handle prev_output
+                stdout=subprocess.PIPE if not is_last_cmd else sys.stdout,
+                stderr=sys.stderr
+            )
+            
+            input_bytes = prev_output.encode() if prev_output else None
+            
+            # Run the command
+            # communicate() handles writing to stdin and closing it
+            out_data, _ = p.communicate(input=input_bytes)
+            
+            if not is_last_cmd:
+                # Capture output for the next loop iteration
+                prev_output = out_data.decode() if out_data else ""
+            
+            i += 1
+
+    except Exception as e:
+        print(f"Pipeline Error: {e}", file=sys.stderr)
+                  
         
 # mail shell loop
 def main():
-    
     readline.set_completer(auto_completion)
     if 'libedit' in readline.__doc__:
         readline.parse_and_bind("bind ^I rl_complete")
     else:
         readline.parse_and_bind("tab: complete")
     
-    # TODO: Uncomment the code below to pass the first stage
     global last_written_index
+    
     while True: 
         try:
+            # --- PROMPT & INPUT ---
             try:
-                #capture history length Before input
                 pre_len = readline.get_current_history_length()
-                command = input("$ ")
-                
-                #Capture history length After input
+                command = input("$ ") 
                 post_len = readline.get_current_history_length()
-                
-                
             except EOFError:
                 break
+            
             if not command.strip():
                 continue
             
+            # --- HISTORY ---
             if post_len == pre_len:
                 readline.add_history(command)
-                
             History.append(command)
             
+            # --- PROCESSING ---
             try:
+                # 1. PIPELINE HANDLING
                 if "|" in command:
-                    try:
-                        parts_raw = command.split("|")
-                        parts = []
-                        for p in parts in parts_raw:
-                            s = shlex.split(p.strip())
-                            if s:parts.append(s)
-                    except ValueError:
-                        print("Syntax error: checking for pipes blindly", file=sys.stderr)
-                        continue #History is already saved, so safe to continue
-                    
-                    if not parts : continue
-                    
-                    has_builtin = any(p[0] in SHELL_builtin for p in parts if p)
-                    
-                    # ===============================
-                    # CASE 1: NO BUILTINS (pure external pipeline)
-                    # ===============================
-                    
-                    if not has_builtin:
-                        prev_pipe = None
-                        processes = []
-                        for i, args in enumerate(parts):
-                            if not args: continue #skip empty parts
-                            stdin = prev_pipe
-                            stdout = subprocess.PIPE if i<len(parts) - 1 else sys.stdout
-                        
-                            #safe execution
-                            executable = shutil.which(args[0])
-                            if not executable:
-                                print(f"{args[0]}: command not found", file=sys.stderr)
-                                prev_pipe = None #break the chain data
-                                break
-                            
-                            p = subprocess.Popen(
-                                args,
-                                stdin= stdin,
-                                stdout = stdout,
-                                stderr=sys.stderr
-                            )
-                        
-                            if prev_pipe is not None:
-                                prev_pipe.close()
-                            
-                            prev_pipe = p.stdout
-                            processes.append(p)
-                        
-                        for p in processes:
-                            p.wait()
-                        continue
-                    
-                    # ===============================
-                    # CASE 2: PIPELINE WITH BUILTIN
-                    # ===============================
-                    i = 0
-                    prev_output = None
-                    
-                    while i<len(parts):
-                        args =parts[i]
-                        is_builtin = args[0] in SHELL_builtin
-                        is_last =(i== len(parts)-1)
-                        
-                        if is_builtin and prev_output is None and is_last:
-                            run_builtin(args)
-                            break
-                        #Builtin | external
-                        if is_builtin:
-                            prev_output = capture_builtin_output(args)
-                            i+=1
-                            continue
-                        # external command
-                        p = subprocess.Popen(
-                            args,
-                            stdin = subprocess.PIPE,
-                            stdout = subprocess.PIPE if not is_last else sys.stdout,
-                            stderr = sys.stderr
-                        )
-                        
-                        if prev_output is not None:
-                            prev_output, _ = p.communicate(prev_output.encode())
-                        else:
-                            p.wait()
-                        i +=1
+                    handle_pipeline(command)
                     continue
-                    
-                global last_text, tab_count
-                last_text = None
-                tab_count = 0
-                
+
+                # 2. NORMAL PARSING
                 try:
                     str_split = shlex.split(command)
                 except ValueError:
-                    print(f"syntax error:{command}", file= sys.stderr)
+                    print(f"syntax error: {command}", file=sys.stderr)
                     continue
                 
-                if not str_split:
-                    continue    
-                #redierection setup 
+                if not str_split: continue    
+
+                # 3. REDIRECTION
                 f_out = sys.stdout
                 f_err = sys.stderr
-                
-                #check for redirection operators(simplifed safe check)
                 operator = None
-                is_error = False
+                is_error_redir = False
                 mode = 'w'
                 
+                if "2>>" in command: operator, mode, is_error_redir = "2>>", "a", True
+                elif "2>" in command: operator, mode, is_error_redir = "2>", "w", True   
+                elif ">>" in command: operator, mode, is_error_redir = ">>", "a", False
+                elif ">" in command: operator, mode, is_error_redir = ">", "w", False            
                 
-                if command == "exit":
-                    break
-                
-                # --- REDIRECTON DETECTION ---
-                if "2>>" in command:
-                    operator, mode, is_error_redir ="2>>", "a", True
-                elif "2>" in command:
-                    operator, mode, is_error_redir ="2>", "w", True   
-                elif ">>" in command:
-                    operator, mode, is_error_redir =">>", "a", False
-                elif ">" in command:
-                    operator, mode, is_error_redir =">", "w", False            
-                else:
-                    operator = None
-                
-                # --- REDIRECTION PLUMBING ---
                 if operator:
                     try:
                         cmd_part, fileName_part = command.split(operator, 1)
                         if not is_error_redir and cmd_part.strip().endswith("1"):
-                            cmd_part= cmd_part.strip()[:-1]
+                            cmd_part = cmd_part.strip()[:-1]
                             
                         str_split = shlex.split(cmd_part)
                         fileName = fileName_part.strip()
-                        
                         os.makedirs(os.path.dirname(os.path.abspath(fileName)), exist_ok=True)
                         f_file = open(fileName, mode)
                         
-                        if is_error_redir:
-                            f_err = f_file
-                        else:
-                            f_out = f_file
+                        if is_error_redir: f_err = f_file
+                        else: f_out = f_file
                     except Exception as e:
                         print(f"Redirection error: {e}", file=sys.stderr)
-        
+                
+                # 4. EXECUTION
                 cmd = str_split[0]
+
                 if cmd == "exit":
                     sys.exit(0)
-                    
                 elif cmd == "echo":
-                    print(" ".join(str_split[1:]), file = f_out)
-                    
+                    print(" ".join(str_split[1:]), file=f_out)
                 elif cmd == "pwd":
-                    # Navigation: Finding where we are
                     print(os.getcwd(), file=f_out)
-                #for cd
                 elif cmd == "cd":
-
-                    path = str_split[1] if len(str_split)>1 else "~"
-                    #handle shortcuts
+                    path = str_split[1] if len(str_split) > 1 else "~"
                     path = os.path.expanduser(path)
                     try:
                         os.chdir(path)
                     except FileNotFoundError:
-                        print(f"cd: {path}: No such file or directory", file = f_err)
-                
+                        print(f"cd: {path}: No such file or directory", file=f_err)
                 elif cmd == "history":
-                    
-                    #history -a <file> APPEND
                     if len(str_split) > 2 and str_split[1] == "-a":
-                        file_path = str_split[2]
-                        
+                        file_path = os.path.expanduser(str_split[2])
                         try:
                             with open(file_path, "a") as f:
                                 for h_cmd in History[last_written_index:]:
                                     f.write(h_cmd + "\n")
                             last_written_index = len(History)
                         except Exception: pass
-                    
-                    #history -w <file> WRITE FILE 
                     elif len(str_split) > 2 and str_split[1] == "-w":
-                        file_path = str_split[2]
-                        
+                        file_path = os.path.expanduser(str_split[2])
                         try:
                             with open(file_path, "w") as f:
                                 for h_cmd in History:
                                     f.write(h_cmd + "\n")
-                        except FileNotFoundError: pass
-                        
-                    #history -r <file> (READ FROM FILE)
+                            last_written_index = len(History)
+                        except Exception: pass
                     elif len(str_split) > 2 and str_split[1] == "-r":
-                        file_path = str_split[2]
-                        
+                        file_path = os.path.expanduser(str_split[2])
                         try:
                             with open(file_path, "r") as f:
                                 for line in f:
                                     h_cmd = line.strip()
-                                    if h_cmd: #ignore empty lines
+                                    if h_cmd: 
                                         History.append(h_cmd)
                                         readline.add_history(h_cmd)
-                            
                             last_written_index = len(History)
-                        except FileNotFoundError:pass
-                    
+                        except FileNotFoundError: pass
                     else:
-                        #history with number
-                        n = int(str_split[1]) if len(str_split) >1 and str_split[1].isdigit() else len(History)
+                        n = int(str_split[1]) if len(str_split) > 1 and str_split[1].isdigit() else len(History)
                         start = max(0, len(History) - n)
-                        
                         for i in range(start, len(History)):
-                            print(f"{i+1:>5}  {History[i]}", file = f_out)
-                            
+                            print(f"{i+1:>5}  {History[i]}", file=f_out)
                 elif cmd == "type":
-                    if len(str_split) >1:
-                        target =str_split[1]
-                        builtin = ["exit", "echo","type","pwd","cd", "history"]
-                    if target in builtin:
-                        print(f"{target} is a shell builtin", file = f_out)
-                    elif shutil.which(target):
-                        print(f"{target}+ is {shutil.which(target)}", file = f_out)
-                        print(str_split[1]+ " is "+path)
-                    else:
-                        print(f"{target}: not found", file =f_out)
-                
-                
+                    if len(str_split) > 1:
+                        target = str_split[1]
+                        if target in SHELL_builtin:
+                            print(f"{target} is a shell builtin", file=f_out)
+                        elif shutil.which(target):
+                            print(f"{target} is {shutil.which(target)}", file=f_out)
+                        else:
+                            print(f"{target}: not found", file=f_out)
                 else:
-                    # EXTERNAL COMMANDS & REDIRECTION
-                    exe =shutil.which(cmd)
+                    exe = shutil.which(cmd)
                     if exe:
-                        subprocess.run(str_split, stdout= f_out, stderr = f_err)
+                        subprocess.run(str_split, stdout=f_out, stderr=f_err)
                     else:
-                        print(f"{cmd}: command not found", file = f_err)
+                        print(f"{cmd}: command not found", file=f_err)
         
-                # CLEANUP
-                    if f_out is not sys.stdout: f_out.close() 
-                    if f_err is not sys.stderr: f_err.close()
+                # 5. CLEANUP
+                if f_out is not sys.stdout: f_out.close() 
+                if f_err is not sys.stderr: f_err.close()
+
             except Exception as e:
                 print(f"Error: {e}", file=sys.stderr)
                 
         except KeyboardInterrupt:
             print()
             continue
-
-
 
 if __name__ == "__main__":
     main()
