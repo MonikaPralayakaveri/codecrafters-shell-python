@@ -291,11 +291,12 @@ def main():
                 print(os.getcwd(), file=f_out)
             
             elif str_split[0] == "history":
+                
+                global last_written_index
+                
                 #history -a <file> APPEND
                 if len(str_split) > 2 and str_split[1] == "-a":
                     file_path = str_split[2]
-                    
-                    global last_written_index
                     
                     try:
                         with open(file_path, "a") as f:
@@ -332,7 +333,6 @@ def main():
                                     History.append(cmd)
                                     readline.add_history(cmd)
                         
-                        global last_written_index
                         last_written_index = len(History)
                                     
                     except FileNotFoundError:
