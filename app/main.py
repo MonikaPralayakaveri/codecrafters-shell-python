@@ -183,12 +183,17 @@ def main():
             try:
                 if "|" in command:
                     try:
-                        str_split = shlex.split(command)
+                        parts_raw = command.split("|")
+                        parts = []
+                        for p in parts in parts_raw:
+                            s = shlex.split(p.strip())
+                            if s:parts.append(s)
                     except ValueError:
                         print("Syntax error: checking for pipes blindly", file=sys.stderr)
-                        continue
-                    str_split = command.split()
-                    parts = [shlex.split(p.strip()) for p in command.split("|")]
+                        continue #History is already saved, so safe to continue
+                    
+                    if not parts : continue
+                    
                     has_builtin = any(p[0] in SHELL_builtin for p in parts if p)
                     
                     # ===============================
