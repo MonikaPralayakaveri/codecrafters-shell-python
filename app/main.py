@@ -302,7 +302,7 @@ def main():
                             for cmd in History[last_written_index:]:
                                 f.write(cmd + "\n")
                             
-                            f.write("")
+                            
                     except Exception:
                         pass
                     
@@ -331,6 +331,9 @@ def main():
                                 if cmd: #ignore empty lines
                                     History.append(cmd)
                                     readline.add_history(cmd)
+                        
+                        global last_written_index
+                        last_written_index = len(History)
                                     
                     except FileNotFoundError:
                         pass
