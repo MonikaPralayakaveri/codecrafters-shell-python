@@ -158,93 +158,113 @@ def run_builtin(cmd_parts):
 def handle_pipeline(command):
     try:
         # 1. Parse all segments of the pipe
+        # Split the string by the pipe charcter '|'
         parts_raw = command.split("|")
         parts = []
+        
+        # Clean up each part(remove extra spaces) and split it into arguments
         for p in parts_raw:
             cleaned = shlex.split(p.strip())
             if cleaned:
                 parts.append(cleaned)
-        
-        if not parts:
-            return
-
-        # 2. Check for builtins
-        has_builtin = False
-        for p in parts:
-            if p[0] in SHELL_builtin:
-                has_builtin = True
-                break
-        
-        # 3. Case 1: Pure External Pipeline (cat | head | wc)
-        if not has_builtin:
-            prev_pipe = None
-            processes = []
             
-            for i, args in enumerate(parts):
-                stdin = prev_pipe
-                stdout = subprocess.PIPE if i < len(parts) - 1 else sys.stdout
+            # If the command was empty(eg. just "|"), stop here.
+            if not parts:
+                return
+
+            # 2. Check for builtins
+            # Look at the first word of each command (p[0]) to see if it's in our list.
+            has_builtin = False
+            for p in parts:
+                if p[0] in SHELL_builtin:
+                    has_builtin = True
+                    break
                 
-                if not shutil.which(args[0]):
-                    print(f"{args[0]}: command not found", file=sys.stderr)
-                    return 
-
-                p = subprocess.Popen(args, stdin=stdin, stdout=stdout, stderr=sys.stderr)
+            # 3. Case:1 Pure External Pipeline( e.g., cat | head | wc)
+            if not has_builtin:
+                prev_pipe = None
+                processes = []
                 
-                if prev_pipe:
-                    prev_pipe.close()
-                
-                prev_pipe = p.stdout
-                processes.append(p)
-            
-            for p in processes:
-                p.wait()
-            return
-
-        # 4. Case 2: Mixed Pipeline (Builtins + External)
-        i = 0
-        prev_output = None 
-        
-        while i < len(parts):
-            args = parts[i]
-            cmd_name = args[0]
-            is_last_cmd = (i == len(parts) - 1)
-            is_builtin_cmd = cmd_name in SHELL_builtin
-            
-            # --- FIX IS HERE ---
-            # If it's the last command and it's a builtin, just run it!
-            # We don't care if 'prev_output' exists because 'type', 'echo', etc. ignore stdin.
-            if is_builtin_cmd and is_last_cmd:
-                run_builtin(args)
-                break
-            # -------------------
-            
-            # Sub-case: Builtin in the middle (capture output for next stage)
-            if is_builtin_cmd:
-                prev_output = capture_builtin_output(args)
-                i += 1
-                continue
-            
-            # Sub-case: External command
-            p = subprocess.Popen(
-                args,
-                stdin=subprocess.PIPE, 
-                stdout=subprocess.PIPE if not is_last_cmd else sys.stdout,
-                stderr=sys.stderr
-            )
-            
-            input_bytes = prev_output.encode() if prev_output else None
-            
-            out_data, _ = p.communicate(input=input_bytes)
-            
-            if not is_last_cmd:
-                prev_output = out_data.decode() if out_data else ""
-            
-            i += 1
-
-    except Exception as e:
-        print(f"Pipeline Error: {e}", file=sys.stderr)
+                for i, args in enumerate(parts):
+                    #i/p: comes from the previous command's pipe ( or None if it's the first)
+                    stdin = prev_pipe
                     
-        
+                    #o/p : Goes to a new pipe, UNLESS its the last command( then goes to screen)
+                    stdout = subprocess.PIPE if i< len(parts) - 1 else sys.stdout
+                    
+                    #safety check: Does the commad exist?
+                    if not shutil.which(args[0]):
+                        print(f"{args[0]}: command not found", file = sys.stderr)
+                        return
+                    
+                    #start the process!
+                    p = subprocess.Popen(args, stdin = stdin, stdout = stdout, stderr = sys.stderr)
+                    
+                    #imp: close the write-end of the previous pipe.
+                    #if we don't, the previous process will never know when to stop writing.
+                    if prev_pipe:
+                        prev_pipe.close()
+                        
+                    #save this process's output to be the input for the next one
+                    prev_pipe = p.stdout
+                    processes.append(p)
+                    
+                    #wait for everyone to finish
+                    for p in processes:
+                        p.wait()
+                    return
+            #4. Case2: mixed pipeline(builtin+external)
+            i = 0
+            prev_output = None
+            
+            while i<len(parts):
+                args = parts[i]
+                cmd_name = args[0]
+                
+                #helper flags to make logic clearer
+                is_last_cmd = (i==len(parts) - 1)
+                is_builtin_cmd = cmd_name in SHELL_builtin
+                
+                #sub-case A: Builtin is the last command
+                #eg., "ls| type exist"
+                #we run it! we don't care about prev input because builtins ignore it.
+                if is_builtin_cmd and is_last_cmd:
+                    run_builtin(args)
+                    break
+                
+                #sub-case B: Builtin is the last command
+                #eg., "echo hello | cat"
+                #we run it, capture the output text, and save it for the next loop.
+                if is_builtin_cmd:
+                    prev_output = capture_builtin_output(args) 
+                    i += 1
+                    continue
+                
+                #case 3: External command
+                #ex., "...|cat|..."
+                #we start the process and manually feed it the 'prev_output' data.
+                p = subprocess.Popen(
+                    args,
+                    stdin = subprocess.PIPE,
+                    stdout = subprocess.PIPE if not is_last_cmd else sys.stdout,
+                    stderr = sys.stderr
+                )
+                
+                #convert our string back to bytes for the process
+                input_bytes = prev_output.encode() if prev_output else None
+                
+                #run it and capture the result
+                out_data, _ = p.communicate(input = input_bytes)
+                
+                #If it's not the last command, decode the output for the next step
+                if not is_last_cmd:
+                    prev_output = out_data.decode() if out_data else ""
+                    
+                i +=1 
+                
+    except Exception as e:
+        print(f"Pipeline Error: {e}", file = sys.stderr)
+                
 # mail shell loop
 def main():
     readline.set_completer(auto_completion)
